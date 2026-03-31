@@ -146,3 +146,17 @@ export interface FlowDraft {
 }
 
 export type ScaffoldLevel = 'high' | 'medium' | 'low'
+
+export interface UserAccount {
+  id: string
+  username: string
+  password: string
+  privacyConsent: boolean
+  privacyConsentAt: number
+  createdAt: number
+}
+
+export interface AuthState {
+  user: UserAccount | null
+  isLoggedIn: boolean
+}

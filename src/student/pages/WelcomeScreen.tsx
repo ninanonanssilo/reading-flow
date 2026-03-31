@@ -1,9 +1,12 @@
 import { useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import { useFlow } from '../../context/FlowContext'
 import { badges as badgeDefs, levels } from '../../data/constants'
 
 export default function WelcomeScreen() {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const { player, setName } = useFlow()
   const currentLevel = levels.find((l) => l.level === player.level) ?? levels[0]
   const nextLevel = levels.find((l) => l.level === player.level + 1)
@@ -32,7 +35,27 @@ export default function WelcomeScreen() {
 
   return (
     <main className="min-h-screen bg-[var(--bg-main)]">
-      <div className="mx-auto flex min-h-screen max-w-4xl flex-col items-center justify-center px-6 py-10">
+      {/* 헤더 */}
+      <header className="mx-auto flex max-w-4xl items-center justify-between px-6 pt-5">
+        <Link
+          to="/teacher"
+          className="border border-[var(--border)] bg-white px-4 py-2 text-sm font-bold text-[var(--text-sub)] shadow-sm transition hover:shadow-md"
+        >
+          👩‍🏫 교사용
+        </Link>
+        <div className="flex items-center gap-2">
+          {user && <span className="text-sm font-bold text-[var(--text-sub)]">{user.username}</span>}
+          <button
+            type="button"
+            onClick={() => { logout(); navigate('/login') }}
+            className="border border-[var(--border)] bg-white px-4 py-2 text-sm font-bold text-[var(--text-light)] shadow-sm transition hover:text-red-500 hover:shadow-md"
+          >
+            로그아웃
+          </button>
+        </div>
+      </header>
+
+      <div className="mx-auto flex min-h-[calc(100vh-60px)] max-w-4xl flex-col items-center justify-center px-6 py-10">
         {/* 타이틀 */}
         <div className="mb-8 text-center">
           <div className="mb-3 text-6xl">📚</div>
@@ -168,12 +191,6 @@ export default function WelcomeScreen() {
             className="bg-[var(--primary)] px-10 py-4 text-lg font-extrabold text-white shadow-md transition hover:bg-[var(--primary-dark)] hover:shadow-lg"
           >
             탐험 시작하기 →
-          </Link>
-          <Link
-            to="/teacher"
-            className="text-sm font-bold text-[var(--text-light)] transition hover:text-[var(--primary)]"
-          >
-            👩‍🏫 교사 대시보드로 이동
           </Link>
         </div>
       </div>

@@ -1,4 +1,5 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 
 const steps = [
   { path: '/', label: '홈', emoji: '🏠' },
@@ -21,26 +22,52 @@ export default function StudentLayout({
   step?: string
 }) {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
   const currentIndex = steps.findIndex((s) => s.path === location.pathname)
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
 
   return (
     <main className="min-h-screen bg-[var(--bg-main)]">
       <div className="mx-auto max-w-5xl px-4 py-5 md:px-8">
         {/* 헤더 */}
         <header className="mb-5 flex items-center justify-between">
-          <Link
-            to="/"
-            className="flex items-center gap-2 border border-[var(--border)] bg-white px-5 py-2.5 text-base font-extrabold text-[var(--primary)] shadow-sm transition hover:shadow-md"
-          >
-            <span className="text-xl">📚</span>
-            리딩플로우
-          </Link>
-          <Link
-            to="/teacher"
-            className="border border-[var(--border)] bg-white px-4 py-2 text-sm font-bold text-[var(--text-sub)] shadow-sm transition hover:shadow-md"
-          >
-            👩‍🏫 교사용
-          </Link>
+          {/* 좌측: 교사 대시보드 + 홈 */}
+          <div className="flex items-center gap-2">
+            <Link
+              to="/teacher"
+              className="border border-[var(--border)] bg-white px-4 py-2 text-sm font-bold text-[var(--text-sub)] shadow-sm transition hover:shadow-md"
+            >
+              👩‍🏫 교사용
+            </Link>
+            <Link
+              to="/"
+              className="flex items-center gap-2 border border-[var(--border)] bg-white px-5 py-2 text-base font-extrabold text-[var(--primary)] shadow-sm transition hover:shadow-md"
+            >
+              <span className="text-lg">📚</span>
+              리딩플로우
+            </Link>
+          </div>
+
+          {/* 우측: 회원 정보 */}
+          <div className="flex items-center gap-2">
+            {user && (
+              <span className="text-sm font-bold text-[var(--text-sub)]">
+                {user.username}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="border border-[var(--border)] bg-white px-4 py-2 text-sm font-bold text-[var(--text-light)] shadow-sm transition hover:text-red-500 hover:shadow-md"
+            >
+              로그아웃
+            </button>
+          </div>
         </header>
 
         {/* 진행 단계 */}
