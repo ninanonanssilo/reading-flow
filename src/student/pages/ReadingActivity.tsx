@@ -86,15 +86,13 @@ export default function ReadingActivity() {
           {/* 녹음 상태 */}
           <div className={`border-2 p-4 shadow-sm ${isRecording ? 'border-red-400 bg-red-50' : 'border-[var(--border)] bg-white'}`}>
             <div className="flex items-center gap-3">
-              <div className={`h-3 w-3 ${isRecording ? 'bg-red-500 animate-pulse' : speech.state === 'loading' ? 'bg-yellow-400 animate-pulse' : 'bg-gray-300'}`} />
+              <div className={`h-3 w-3 ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-gray-300'}`} />
               <span className="text-sm font-bold text-[var(--text-main)]">
-                {speech.state === 'loading'
-                  ? '오프라인 음성인식 엔진(한국어)을 불러오는 중입니다... (최초 1회 약 40MB)'
-                  : isRecording
-                    ? '녹음 중... 또박또박 읽어보세요!'
-                    : finished 
-                      ? '✓ 녹음 완료!' 
-                      : '아래 버튼을 눌러 시작하세요'}
+                {isRecording
+                  ? '녹음 중... 또박또박 읽어보세요!'
+                  : finished 
+                    ? '✓ 녹음 완료!' 
+                    : '아래 버튼을 눌러 시작하세요'}
               </span>
             </div>
           </div>
@@ -204,7 +202,11 @@ export default function ReadingActivity() {
                 <p className="min-h-24 text-base leading-7 text-gray-100">
                   {speech.transcript || '아직 인식된 내용이 없어요. 시작 버튼을 누르고 읽어보세요!'}
                 </p>
-                {speech.error && <p className="mt-2 text-sm text-red-400">오류: {speech.error}</p>}
+                {speech.error && (
+                  <div className="mb-4 text-center text-sm font-bold text-red-500">
+                    {speech.error}
+                  </div>
+                )}
                 <textarea
                   value={speech.transcript}
                   onChange={(e) => {
@@ -222,10 +224,9 @@ export default function ReadingActivity() {
                   <button
                     type="button"
                     onClick={handleStart}
-                    disabled={speech.state === 'loading'}
-                    className={`flex-1 py-3.5 text-base font-extrabold text-white shadow-md transition ${speech.state === 'loading' ? 'bg-gray-400 cursor-not-allowed opacity-70' : 'bg-[var(--secondary)] hover:opacity-90'}`}
+                    className="flex-1 bg-[var(--secondary)] py-3.5 text-base font-extrabold text-white shadow-md transition hover:opacity-90"
                   >
-                    {speech.state === 'loading' ? '⏳ AI 음성 모델 로딩 중...' : '🎤 읽기 시작'}
+                    🎤 읽기 시작
                   </button>
                 ) : (
                   <button

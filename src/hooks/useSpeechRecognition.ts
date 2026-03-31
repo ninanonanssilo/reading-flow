@@ -13,7 +13,7 @@ export function useSpeechRecognition(locale = 'ko-KR') {
   const streamRef = useRef<MediaStream | null>(null)
 
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SpeechRecognition) {
       setState('unsupported')
       setError('이 브라우저는 음성 인식을 지원하지 않습니다. 크롬 브라우저를 이용해주세요.')
