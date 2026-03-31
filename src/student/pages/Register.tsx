@@ -12,7 +12,7 @@ const roleConfig = {
     home: '/',
     loginPath: '/login/student',
     privacyItems: [
-      '아이디, 비밀번호, 닉네임',
+      '실명(이름), 생년월일, 아이디, 비밀번호',
       '읽기 활동 기록(정확도, 속도, 오류 유형)',
       '자기평가 데이터, 학습 진행 현황',
     ],
@@ -25,7 +25,7 @@ const roleConfig = {
     home: '/teacher',
     loginPath: '/login/teacher',
     privacyItems: [
-      '아이디, 비밀번호',
+      '실명(이름), 생년월일, 아이디, 비밀번호',
       '담당 학생 읽기 데이터 열람 기록',
     ],
   },
@@ -41,6 +41,8 @@ export default function Register() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [realName, setRealName] = useState('')
+  const [birthdate, setBirthdate] = useState('')
   const [consent, setConsent] = useState(false)
   const [showPrivacy, setShowPrivacy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -55,7 +57,7 @@ export default function Register() {
       setError('비밀번호가 일치하지 않습니다.')
       return
     }
-    const err = register(username, password, role, consent)
+    const err = register(username, password, role, consent, realName, birthdate)
     if (err) {
       setError(err)
       return
@@ -73,6 +75,26 @@ export default function Register() {
         </div>
 
         <div className="w-full space-y-4">
+          {/* 개인정보: 이름, 생년월일 */}
+          <div className="border border-[var(--border)] bg-white p-5 shadow-sm">
+            <label className="mb-2 block text-sm font-bold text-[var(--text-sub)]">이름(실명)</label>
+            <input
+              type="text"
+              value={realName}
+              onChange={(e) => setRealName(e.target.value)}
+              placeholder="본명을 입력하세요"
+              maxLength={10}
+              className="w-full mb-3 border-2 border-[var(--border)] bg-[var(--bg-main)] px-4 py-3 text-base font-bold text-[var(--text-main)] outline-none transition focus:border-[var(--primary)] placeholder:text-[var(--text-light)]"
+            />
+            <label className="mb-2 block text-sm font-bold text-[var(--text-sub)]">생년월일</label>
+            <input
+              type="date"
+              value={birthdate}
+              onChange={(e) => setBirthdate(e.target.value)}
+              className="w-full border-2 border-[var(--border)] bg-[var(--bg-main)] px-4 py-3 text-base font-bold text-[var(--text-main)] outline-none transition focus:border-[var(--primary)] text-[var(--text-light)] focus:text-[var(--text-main)]"
+            />
+          </div>
+
           {/* 아이디 */}
           <div className="border border-[var(--border)] bg-white p-5 shadow-sm">
             <label className="mb-2 block text-sm font-bold text-[var(--text-sub)]">아이디</label>

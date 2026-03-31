@@ -156,6 +156,8 @@ export interface UserAccount {
   id: string
   username: string
   password: string
+  realName: string
+  birthdate: string
   role: UserRole
   privacyConsent: boolean
   privacyConsentAt: number

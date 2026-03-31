@@ -8,7 +8,7 @@ interface AuthContextValue {
   user: UserAccount | null
   isLoggedIn: boolean
   login: (username: string, password: string, role: UserRole) => string | null
-  register: (username: string, password: string, role: UserRole, privacyConsent: boolean) => string | null
+  register: (username: string, password: string, role: UserRole, privacyConsent: boolean, realName: string, birthdate: string) => string | null
   logout: () => void
 }
 
@@ -51,11 +51,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     writeSession(user?.id ?? null)
   }, [user])
 
-  const register = useCallback((username: string, password: string, role: UserRole, privacyConsent: boolean): string | null => {
+  const register = useCallback((username: string, password: string, role: UserRole, privacyConsent: boolean, realName: string, birthdate: string): string | null => {
     if (!username.trim()) return '아이디를 입력해주세요.'
     if (username.trim().length < 2) return '아이디는 2자 이상이어야 합니다.'
     if (!password) return '비밀번호를 입력해주세요.'
     if (password.length < 4) return '비밀번호는 4자 이상이어야 합니다.'
+    if (!realName.trim()) return '이름을 입력해주세요.'
+    if (!birthdate.trim()) return '생년월일을 입력해주세요.'
     if (!privacyConsent) return '개인정보 수집·이용에 동의해주세요.'
 
     const users = readUsers()
@@ -67,6 +69,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id: crypto.randomUUID(),
       username: username.trim(),
       password,
+      realName: realName.trim(),
+      birthdate: birthdate.trim(),
       role,
       privacyConsent: true,
       privacyConsentAt: Date.now(),
