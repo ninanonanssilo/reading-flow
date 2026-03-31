@@ -17,6 +17,7 @@ const ResultAnalysis = lazy(() => import('./student/pages/ResultAnalysis'))
 const Completion = lazy(() => import('./student/pages/Completion'))
 const Dashboard = lazy(() => import('./teacher/pages/Dashboard'))
 const PinLogin = lazy(() => import('./student/pages/PinLogin'))
+const SessionHistory = lazy(() => import('./student/pages/SessionHistory'))
 
 function Loading() {
   return (
@@ -59,6 +60,7 @@ export default function App() {
               {/* 학생 전용 */}
               <Route path="/nickname" element={<StudentRoute><NicknameSetup /></StudentRoute>} />
               <Route path="/" element={<StudentRoute><WelcomeScreen /></StudentRoute>} />
+              <Route path="/history" element={<StudentRoute><SessionHistory /></StudentRoute>} />
               <Route path="/passage" element={<StudentRoute><PassageSelect /></StudentRoute>} />
               <Route path="/goal" element={<StudentRoute><GoalSetting /></StudentRoute>} />
               <Route path="/reading" element={<StudentRoute><ReadingActivity /></StudentRoute>} />

@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useFlow } from '../../context/FlowContext'
 import { badges as badgeDefs, levels } from '../../data/constants'
 import Lumi from '../components/Lumi'
+import SessionMiniChart from '../components/SessionMiniChart'
 
 export default function WelcomeScreen() {
   const { user, logout } = useAuth()
@@ -140,6 +141,26 @@ export default function WelcomeScreen() {
           )}
         </div>
 
+        {/* 최근 읽기 추이 미니 차트 */}
+        {player.sessions.length >= 2 && (
+          <div className="mb-5 w-full max-w-md border border-[var(--border)] bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-extrabold text-[var(--text-main)]">최근 CWPM 추이</h2>
+              <Link
+                to="/history"
+                className="text-xs font-bold text-[var(--primary)] hover:underline"
+              >
+                전체 기록 →
+              </Link>
+            </div>
+            <SessionMiniChart sessions={player.sessions} height={80} />
+            <div className="mt-2 flex items-center justify-between text-xs text-[var(--text-light)]">
+              <span>최근 {Math.min(5, player.sessions.length)}세션</span>
+              <span>최신: {player.sessions[player.sessions.length - 1].analysis.cwpm.toFixed(1)} CWPM</span>
+            </div>
+          </div>
+        )}
+
         {/* 뱃지 컬렉션 */}
         <div className="mb-5 w-full max-w-md border border-[var(--border)] bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between mb-3">
@@ -198,6 +219,14 @@ export default function WelcomeScreen() {
           >
             탐험 시작하기 →
           </Link>
+          {player.sessions.length > 0 && (
+            <Link
+              to="/history"
+              className="border border-[var(--border)] bg-white px-8 py-3 text-sm font-extrabold text-[var(--text-sub)] shadow-sm transition hover:text-[var(--primary)] hover:shadow-md"
+            >
+              나의 읽기 기록 보기
+            </Link>
+          )}
         </div>
       </div>
     </main>
