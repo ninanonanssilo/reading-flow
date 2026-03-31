@@ -53,7 +53,6 @@ export interface Passage {
   title: string
   text: string
   difficulty: 'easy' | 'medium' | 'hard'
-  gradeLevel: number
   thumbnailEmoji: string
 }
 
