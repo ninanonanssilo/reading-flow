@@ -78,6 +78,8 @@ export interface SessionData {
   analysis: ReadingAnalysis
   selfAssessment: SelfAssessmentData
   timestamp: number
+  audioId?: string // Optional ID linking to IndexedDB audio blob
+  teacherMemo?: string // Optional teacher feedback text
 }
 
 export interface Badge {
@@ -143,6 +145,7 @@ export interface FlowDraft {
   readingEndedAt: number | null
   analysis: ReadingAnalysis | null
   selfAssessment: SelfAssessmentData | null
+  audioId?: string // Link to IndexedDB
 }
 
 export type ScaffoldLevel = 'high' | 'medium' | 'low'

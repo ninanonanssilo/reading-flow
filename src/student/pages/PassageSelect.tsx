@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFlow } from '../../context/FlowContext'
 import { passages } from '../../data/passages'
@@ -14,14 +15,50 @@ const difficultyLabel = { easy: '쉬움', medium: '보통', hard: '어려움' }
 export default function PassageSelect() {
   const navigate = useNavigate()
   const { draft, setPassage } = useFlow()
+  const [filter, setFilter] = useState<'easy' | 'medium' | 'hard'>('easy')
+
+  const filteredPassages = passages.filter((p) => p.difficulty === filter)
 
   return (
     <StudentLayout
       title="어떤 이야기를 읽어볼까요?"
       subtitle="마음에 드는 지문을 골라보세요. 난이도를 확인하고 도전해봐요!"
     >
-      <div className="grid gap-4 md:grid-cols-3">
-        {passages.map((passage) => {
+      {/* 단계 선택 영역 */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-center gap-4 border-b border-[var(--border)] pb-4">
+        <span className="bg-[var(--primary)] text-white px-3 py-1 text-sm font-extrabold shadow-sm">
+          [단계 선택]
+        </span>
+        <div className="flex gap-2">
+        <button
+          onClick={() => setFilter('easy')}
+          className={`px-6 py-2.5 text-sm font-extrabold transition-all border-b-4 ${
+            filter === 'easy' ? 'border-emerald-500 text-emerald-700 bg-emerald-50' : 'border-transparent text-[var(--text-sub)] hover:bg-gray-50'
+          }`}
+        >
+          {difficultyLabel['easy']} (10)
+        </button>
+        <button
+          onClick={() => setFilter('medium')}
+          className={`px-6 py-2.5 text-sm font-extrabold transition-all border-b-4 ${
+            filter === 'medium' ? 'border-amber-500 text-amber-700 bg-amber-50' : 'border-transparent text-[var(--text-sub)] hover:bg-gray-50'
+          }`}
+        >
+          {difficultyLabel['medium']} (10)
+        </button>
+        <button
+          onClick={() => setFilter('hard')}
+          className={`px-6 py-2.5 text-sm font-extrabold transition-all border-b-4 ${
+            filter === 'hard' ? 'border-red-500 text-red-700 bg-red-50' : 'border-transparent text-[var(--text-sub)] hover:bg-gray-50'
+          }`}
+        >
+          {difficultyLabel['hard']} (10)
+        </button>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {filteredPassages.map((passage) => {
           const selected = draft.passageId === passage.id
           return (
             <button

@@ -10,11 +10,13 @@ import {
   PointElement,
   Tooltip,
 } from 'chart.js'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Bar, Doughnut, Line } from 'react-chartjs-2'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { mockStudents } from '../../data/mockStudents'
+import { readPlayerData, writePlayerData } from '../../utils/storage'
+import { getAudioBlob } from '../../utils/audioStorage'
 
 ChartJS.register(
   CategoryScale,
@@ -45,11 +47,101 @@ const regulationTone = {
 export default function Dashboard() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const [selectedName, setSelectedName] = useState(mockStudents[0]?.name ?? '')
+
+  // 실시간 로컬 실제 학생 데이터 로드
+  const [realPlayer, setRealPlayer] = useState(() => readPlayerData())
+
+  const extendedStudents = useMemo(() => {
+    let list: any[] = [...mockStudents]
+    if (realPlayer.sessions && realPlayer.sessions.length > 0) {
+      const latest = realPlayer.sessions[realPlayer.sessions.length - 1]
+      const fakeProgress = Array(7).fill(40).map((v, i) => v + i * 2)
+      fakeProgress.push(latest.analysis.cwpm)
+
+      const realStudentObj = {
+        name: realPlayer.name || '내 학생 (실제)',
+        cwpmProgress: fakeProgress,
+        accuracy: latest.analysis.accuracy,
+        recentCwpm: latest.analysis.cwpm,
+        errorDist: {
+          S: latest.analysis.errorCounts.substitution,
+          O: latest.analysis.errorCounts.omission,
+          A: latest.analysis.errorCounts.addition,
+          R: latest.analysis.errorCounts.repetition,
+          SC: latest.analysis.errorCounts.selfCorrection,
+        },
+        srlScore: 82,
+        srProcesses: mockStudents[0].srProcesses,
+        regulationLevel: 'co-regulated',
+        srlBadge: '성실형',
+        trend: '▲',
+        sessions: realPlayer.sessions, // 실제 세션 보관
+      }
+      list = [realStudentObj, ...list]
+    }
+    return list
+  }, [realPlayer])
+
+  const [selectedName, setSelectedName] = useState(extendedStudents[0]?.name ?? '')
+
   const student = useMemo(
-    () => mockStudents.find((item) => item.name === selectedName) ?? mockStudents[0],
-    [selectedName],
+    () => extendedStudents.find((item) => item.name === selectedName) ?? extendedStudents[0],
+    [selectedName, extendedStudents],
   )
+
+  const detailsRef = useRef<HTMLElement>(null)
+
+  const handleRowClick = (name: string) => {
+    setSelectedName(name)
+    setTimeout(() => {
+      detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
+  }
+
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const latestSession = student.sessions ? student.sessions[student.sessions.length - 1] : null
+
+  useEffect(() => {
+    let active = true
+    setAudioUrl(null)
+
+    if (latestSession && latestSession.audioId) {
+      getAudioBlob(latestSession.audioId).then(blob => {
+        if (!active || !blob) return
+        const url = URL.createObjectURL(blob)
+        setAudioUrl(url)
+      })
+    }
+    return () => {
+      active = false
+    }
+  }, [latestSession])
+
+  // 교사 메모 저장 로직
+  const [memo, setMemo] = useState('')
+  useEffect(() => {
+    // 학생 변경 시 메모 로드
+    if (latestSession && latestSession.teacherMemo) {
+      setMemo(latestSession.teacherMemo)
+    } else {
+      setMemo(`${student.name}은 최근 자기교정 비율이 높아졌고, 생략 오류는 줄어드는 추세입니다.`)
+    }
+  }, [student, latestSession])
+
+  const handleSaveMemo = () => {
+    if (latestSession && student.sessions) {
+      // 로컬 스토리지에 그대로 저장 (prototyping 목적)
+      const newPlayer = { ...realPlayer }
+      if (newPlayer.sessions.length > 0) {
+        newPlayer.sessions[newPlayer.sessions.length - 1].teacherMemo = memo
+        writePlayerData(newPlayer)
+        setRealPlayer(newPlayer)
+        alert('메모가 저장되었습니다.')
+      }
+    } else {
+      alert('견본 학생 메모는 저장되지 않습니다.')
+    }
+  }
 
   const handleLogout = () => {
     logout()
@@ -57,24 +149,24 @@ export default function Dashboard() {
   }
 
   const classAverageCwpm = Math.round(
-    mockStudents.reduce((sum, item) => sum + item.recentCwpm, 0) / mockStudents.length,
+    extendedStudents.reduce((sum, item) => sum + item.recentCwpm, 0) / extendedStudents.length,
   )
   const classAverageAccuracy = Number(
     (
-      mockStudents.reduce((sum, item) => sum + item.accuracy, 0) / mockStudents.length
+      extendedStudents.reduce((sum, item) => sum + item.accuracy, 0) / extendedStudents.length
     ).toFixed(1),
   )
-  const totalSessions = mockStudents.length * 8
+  const totalSessions = extendedStudents.length * 8
   const selfCorrectionRatio = Number(
     (
-      mockStudents.reduce((sum, item) => sum + item.errorDist.SC, 0) / mockStudents.length
+      extendedStudents.reduce((sum, item) => sum + item.errorDist.SC, 0) / extendedStudents.length
     ).toFixed(1),
   )
 
   const lineData = {
     labels: ['1주', '2주', '3주', '4주', '5주', '6주', '7주', '8주'],
     datasets: [
-      ...mockStudents.slice(0, 3).map((item, index) => ({
+      ...extendedStudents.slice(0, 3).map((item, index) => ({
         label: item.name,
         data: item.cwpmProgress,
         borderColor: ['#2B7FFF', '#FF6B35', '#00C9A7'][index],
@@ -86,7 +178,7 @@ export default function Dashboard() {
         label: '학급 평균',
         data: Array.from({ length: 8 }, (_, week) =>
           Math.round(
-            mockStudents.reduce((sum, item) => sum + item.cwpmProgress[week], 0) / mockStudents.length,
+            extendedStudents.reduce((sum, item) => sum + item.cwpmProgress[week], 0) / extendedStudents.length,
           ),
         ),
         borderColor: '#1A1D23',
@@ -102,11 +194,11 @@ export default function Dashboard() {
       {
         label: '오류 수',
         data: [
-          mockStudents.reduce((sum, item) => sum + item.errorDist.S, 0),
-          mockStudents.reduce((sum, item) => sum + item.errorDist.O, 0),
-          mockStudents.reduce((sum, item) => sum + item.errorDist.A, 0),
-          mockStudents.reduce((sum, item) => sum + item.errorDist.R, 0),
-          mockStudents.reduce((sum, item) => sum + item.errorDist.SC, 0),
+          extendedStudents.reduce((sum, item) => sum + item.errorDist.S, 0),
+          extendedStudents.reduce((sum, item) => sum + item.errorDist.O, 0),
+          extendedStudents.reduce((sum, item) => sum + item.errorDist.A, 0),
+          extendedStudents.reduce((sum, item) => sum + item.errorDist.R, 0),
+          extendedStudents.reduce((sum, item) => sum + item.errorDist.SC, 0),
         ],
         backgroundColor: ['#2B7FFF', '#FF6B35', '#FF6B9D', '#7C5CFC', '#00C9A7'],
       },
@@ -114,14 +206,14 @@ export default function Dashboard() {
   }
 
   const srlBarData = {
-    labels: mockStudents.slice(0, 5).map((item) => item.name),
+    labels: extendedStudents.slice(0, 5).map((item) => item.name),
     datasets: [
-      { label: 'Orientation', data: mockStudents.slice(0, 5).map((item) => item.srProcesses[0].pct), backgroundColor: '#E8F1FF' },
-      { label: 'Planning', data: mockStudents.slice(0, 5).map((item) => item.srProcesses[1].pct), backgroundColor: '#bfdbfe' },
-      { label: 'Monitoring', data: mockStudents.slice(0, 5).map((item) => item.srProcesses[2].pct), backgroundColor: '#93c5fd' },
-      { label: 'Evaluation', data: mockStudents.slice(0, 5).map((item) => item.srProcesses[3].pct), backgroundColor: '#60a5fa' },
-      { label: 'Reading', data: mockStudents.slice(0, 5).map((item) => item.srProcesses[4].pct), backgroundColor: '#2B7FFF' },
-      { label: 'Rereading', data: mockStudents.slice(0, 5).map((item) => item.srProcesses[5].pct), backgroundColor: '#1A5DC8' },
+      { label: 'Orientation', data: extendedStudents.slice(0, 5).map((item) => item.srProcesses[0].pct), backgroundColor: '#E8F1FF' },
+      { label: 'Planning', data: extendedStudents.slice(0, 5).map((item) => item.srProcesses[1].pct), backgroundColor: '#bfdbfe' },
+      { label: 'Monitoring', data: extendedStudents.slice(0, 5).map((item) => item.srProcesses[2].pct), backgroundColor: '#93c5fd' },
+      { label: 'Evaluation', data: extendedStudents.slice(0, 5).map((item) => item.srProcesses[3].pct), backgroundColor: '#60a5fa' },
+      { label: 'Reading', data: extendedStudents.slice(0, 5).map((item) => item.srProcesses[4].pct), backgroundColor: '#2B7FFF' },
+      { label: 'Rereading', data: extendedStudents.slice(0, 5).map((item) => item.srProcesses[5].pct), backgroundColor: '#1A5DC8' },
     ],
   }
 
@@ -210,13 +302,13 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {mockStudents.map((item) => {
-                  const dominant = Object.entries(item.errorDist).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '-'
+                {extendedStudents.map((item) => {
+                  const dominant = Object.entries(item.errorDist).sort((a: any, b: any) => b[1] - a[1])[0]?.[0] ?? '-'
                   const isSelected = item.name === selectedName
                   return (
                     <tr
                       key={item.name}
-                      onClick={() => setSelectedName(item.name)}
+                      onClick={() => handleRowClick(item.name)}
                       className={`border-t border-[var(--border)] cursor-pointer transition ${
                         isSelected
                           ? 'bg-[var(--primary-light)] border-l-4 border-l-[var(--primary)]'
@@ -229,8 +321,8 @@ export default function Dashboard() {
                       <td className="py-3">{dominant}</td>
                       <td className="py-3">{item.srlScore}</td>
                       <td className="py-3">
-                        <span className={`border px-2 py-0.5 text-xs font-bold ${regulationTone[item.regulationLevel]}`}>
-                          {regulationLabel[item.regulationLevel]}
+                        <span className={`border px-2 py-0.5 text-xs font-bold ${regulationTone[item.regulationLevel as keyof typeof regulationTone]}`}>
+                          {regulationLabel[item.regulationLevel as keyof typeof regulationLabel]}
                         </span>
                       </td>
                       <td className="py-3 text-lg">{item.trend}</td>
@@ -243,13 +335,13 @@ export default function Dashboard() {
         </section>
 
         {/* 선택된 학생 상세 */}
-        <section className="mt-8 border-l-4 border-l-[var(--primary)] bg-white border border-[var(--border)] p-6 shadow-sm animate-slide-up" key={selectedName}>
+        <section ref={detailsRef} className="mt-8 border-l-4 border-l-[var(--primary)] bg-white border border-[var(--border)] p-6 shadow-sm animate-slide-up" key={selectedName}>
           <div className="mb-5 flex items-center justify-between">
             <div>
               <h2 className="text-xl font-extrabold text-[var(--text-main)]">{student.name} 학습 현황</h2>
               <div className="mt-2 flex flex-wrap gap-2">
-                <span className={`border px-3 py-1 text-xs font-bold ${regulationTone[student.regulationLevel]}`}>
-                  {regulationLabel[student.regulationLevel]}
+                <span className={`border px-3 py-1 text-xs font-bold ${regulationTone[student.regulationLevel as keyof typeof regulationTone]}`}>
+                  {regulationLabel[student.regulationLevel as keyof typeof regulationLabel]}
                 </span>
                 <span className="border border-[var(--border)] bg-[var(--bg-main)] px-3 py-1 text-xs font-bold text-[var(--text-sub)]">
                   배지 {student.srlBadge}
@@ -277,30 +369,38 @@ export default function Dashboard() {
           </div>
 
           <div className="mt-5 grid gap-5 xl:grid-cols-2">
-            <div className="border border-[var(--border)] bg-[var(--bg-main)] p-5">
-              <h3 className="text-base font-extrabold">읽기 과정 타임라인</h3>
-              <div className="mt-4 flex items-center gap-3 text-2xl">
-                <span>🎯</span><span className="text-[var(--text-light)]">→</span>
-                <span>🎤</span><span className="text-[var(--text-light)]">→</span>
-                <span>✅</span><span className="text-[var(--text-light)]">→</span>
-                <span>🔁</span>
-              </div>
-              <div className="mt-5">
-                <div className="mb-2 flex items-center justify-between text-sm font-bold text-[var(--text-light)]">
-                  <span>자기평가 정확도</span>
-                  <span>78%</span>
+            {/* 학생 오디오 기록 조회 (실 데이터 전용) */}
+            <div className="border border-[var(--border)] bg-[var(--bg-main)] p-5 flex flex-col">
+              <h3 className="text-base font-extrabold mb-3">학생 목소리 듣기 (Audio Record)</h3>
+              {audioUrl ? (
+                <div className="flex-1 flex flex-col justify-center">
+                  <p className="text-sm text-[var(--text-sub)] mb-3">최근 완료한 읽기 세션의 오디오입니다.</p>
+                  <audio controls src={audioUrl} className="w-full" />
                 </div>
-                <div className="h-3 overflow-hidden bg-white">
-                  <div className="h-full w-[78%] bg-[var(--primary)]" />
+              ) : (
+                <div className="flex-1 flex items-center justify-center border-2 border-dashed border-gray-300">
+                  <p className="text-sm font-bold text-gray-400">오디오 기록이 존재하지 않습니다.</p>
                 </div>
-              </div>
+              )}
             </div>
+
+            {/* 교사 메모 영역 */}
             <div className="border border-[var(--border)] bg-[var(--bg-main)] p-5">
-              <h3 className="text-base font-extrabold">교사 메모</h3>
+              <h3 className="text-base font-extrabold flex justify-between items-center">
+                <span>교사 메모 및 피드백</span>
+                {latestSession && (
+                  <button onClick={handleSaveMemo} className="text-xs bg-[var(--primary)] text-white px-3 py-1 font-bold shadow-sm hover:opacity-90">
+                    저장하기
+                  </button>
+                )}
+              </h3>
               <textarea
-                className="mt-3 min-h-24 w-full border border-[var(--border)] bg-white p-4 text-sm outline-none"
-                defaultValue={`${student.name}은 최근 자기교정 비율이 높아졌고, 생략 오류는 줄어드는 추세입니다.`}
+                value={memo}
+                onChange={(e) => setMemo(e.target.value)}
+                className="mt-3 min-h-24 w-full border border-[var(--border)] bg-white p-4 text-sm outline-none resize-none"
+                placeholder="이곳에 피드백을 작성하세요..."
               />
+              {!latestSession && <p className="mt-2 text-xs text-red-400">※ 견본 학생 데이터에는 메모를 저장할 수 없습니다.</p>}
             </div>
           </div>
         </section>
@@ -322,7 +422,23 @@ export default function Dashboard() {
               />
             </div>
           </div>
-          <div className="border border-[var(--border)] bg-white p-6 shadow-sm">
+          <div className="border border-[var(--border)] bg-[var(--text-main)] p-6 text-white shadow-sm md:col-span-2 lg:col-span-1">
+            <h2 className="text-lg font-extrabold">HHAIR 조절 상태</h2>
+            <div className="mt-5 grid gap-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-1">
+              {extendedStudents.map((item) => (
+                <div key={item.name} className="flex items-center justify-between border border-white/20 bg-white/10 px-4 py-3">
+                  <div>
+                    <div className="font-bold">{item.name}</div>
+                    <div className="text-xs text-gray-400">{item.srlBadge}</div>
+                  </div>
+                  <span className={`border px-3 py-1 text-xs font-bold ${regulationTone[item.regulationLevel as keyof typeof regulationTone]}`}>
+                    {regulationLabel[item.regulationLevel as keyof typeof regulationLabel]}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="border border-[var(--border)] bg-white p-6 shadow-sm md:col-span-2">
             <h2 className="text-lg font-extrabold">SRL 프로세스 분석</h2>
             <div className="mt-4 h-80">
               <Bar
@@ -333,22 +449,6 @@ export default function Dashboard() {
                   scales: { x: { stacked: true }, y: { stacked: true } },
                 }}
               />
-            </div>
-          </div>
-          <div className="border border-[var(--border)] bg-[var(--text-main)] p-6 text-white shadow-sm">
-            <h2 className="text-lg font-extrabold">HHAIR 조절 상태</h2>
-            <div className="mt-5 grid gap-2">
-              {mockStudents.map((item) => (
-                <div key={item.name} className="flex items-center justify-between bg-white/10 px-4 py-3">
-                  <div>
-                    <div className="font-bold">{item.name}</div>
-                    <div className="text-xs text-gray-400">{item.srlBadge}</div>
-                  </div>
-                  <span className={`border px-3 py-1 text-xs font-bold ${regulationTone[item.regulationLevel]}`}>
-                    {regulationLabel[item.regulationLevel]}
-                  </span>
-                </div>
-              ))}
             </div>
           </div>
         </section>

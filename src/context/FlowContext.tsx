@@ -21,6 +21,7 @@ interface FlowContextValue {
   markReadingWindow: (startedAt: number | null, endedAt: number | null) => void
   setAnalysis: (analysis: ReadingAnalysis) => void
   setSelfAssessment: (assessment: SelfAssessmentData) => void
+  setAudioId: (id: string) => void
   applyReclassify: (mappingIndex: number, type: 'substitution' | 'omission' | 'addition' | 'repetition' | 'selfCorrection') => void
   setName: (name: string) => void
   commitSession: () => { stars: number; nextLevel: number; newBadges: Badge[] } | null
@@ -74,6 +75,10 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
     (analysis: ReadingAnalysis) => setDraft((current) => ({ ...current, analysis })),
     [],
   )
+  const setAudioId = useCallback(
+    (audioId: string) => setDraft((current) => ({ ...current, audioId })),
+    [],
+  )
   const setSelfAssessment = useCallback(
     (selfAssessment: SelfAssessmentData) => setDraft((current) => ({ ...current, selfAssessment })),
     [],
@@ -109,6 +114,7 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
       confidence: d.confidence,
       analysis: d.analysis,
       selfAssessment: d.selfAssessment,
+      audioId: d.audioId,
       timestamp: Date.now(),
     }
 
@@ -147,12 +153,13 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
       markReadingWindow,
       setAnalysis,
       setSelfAssessment,
+      setAudioId,
       applyReclassify,
       setName,
       commitSession,
       resetDraft,
     }),
-    [draft, player, setPassage, setGoal, setTranscript, markReadingWindow, setAnalysis, setSelfAssessment, applyReclassify, setName, commitSession, resetDraft],
+    [draft, player, setPassage, setGoal, setTranscript, markReadingWindow, setAnalysis, setSelfAssessment, setAudioId, applyReclassify, setName, commitSession, resetDraft],
   )
 
   return <FlowContext.Provider value={value}>{children}</FlowContext.Provider>

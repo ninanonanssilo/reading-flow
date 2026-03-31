@@ -1,104 +1,131 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 
-interface SpeechRecognitionAlternativeLike {
-  transcript: string
-}
-
-interface SpeechRecognitionResultLike {
-  0: SpeechRecognitionAlternativeLike
-}
-
-interface SpeechRecognitionEventLike extends Event {
-  results: ArrayLike<SpeechRecognitionResultLike>
-}
-
-interface SpeechRecognitionErrorEventLike extends Event {
-  error: string
-}
-
-interface SpeechRecognitionLike {
-  lang: string
-  continuous: boolean
-  interimResults: boolean
-  onstart: (() => void) | null
-  onend: (() => void) | null
-  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null
-  onresult: ((event: SpeechRecognitionEventLike) => void) | null
-  start: () => void
-  stop: () => void
-}
-
-type SpeechRecognitionConstructor = new () => SpeechRecognitionLike
-type RecognitionState = 'idle' | 'listening' | 'unsupported'
-
-declare global {
-  interface Window {
-    SpeechRecognition?: SpeechRecognitionConstructor
-    webkitSpeechRecognition?: SpeechRecognitionConstructor
-  }
-}
+export type RecognitionState = 'idle' | 'listening' | 'unsupported' | 'error'
 
 export function useSpeechRecognition(locale = 'ko-KR') {
   const [transcript, setTranscript] = useState('')
-  const [state, setState] = useState<RecognitionState>('idle')
   const [error, setError] = useState<string | null>(null)
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
+  const [state, setState] = useState<RecognitionState>('idle')
 
-  const recognitionClass = useMemo(
-    () => window.SpeechRecognition ?? window.webkitSpeechRecognition ?? null,
-    [],
-  )
+  const recognitionRef = useRef<any>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
+  const streamRef = useRef<MediaStream | null>(null)
 
   useEffect(() => {
-    if (!recognitionClass) {
+    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) {
       setState('unsupported')
+      setError('이 브라우저는 음성 인식을 지원하지 않습니다. 크롬 브라우저를 이용해주세요.')
       return
     }
 
-    const recognition = new recognitionClass()
-    recognition.lang = locale
+    const recognition = new SpeechRecognition()
     recognition.continuous = true
     recognition.interimResults = true
+    recognition.lang = locale
 
-    recognition.onstart = () => {
-      setState('listening')
-      setError(null)
+    recognition.onresult = (event: any) => {
+      let currentTranscript = ''
+      for (let i = 0; i < event.results.length; i++) {
+         currentTranscript += event.results[i][0].transcript
+      }
+      setTranscript(currentTranscript)
+    }
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error)
+      if (event.error !== 'no-speech') {
+        setError('음성 인식 중 오류가 발생했습니다.')
+      }
     }
 
     recognition.onend = () => {
-      setState('idle')
-    }
-
-    recognition.onerror = (event) => {
-      setError(event.error)
-      setState('idle')
-    }
-
-    recognition.onresult = (event) => {
-      const nextTranscript = Array.from(event.results)
-        .map((result) => result[0]?.transcript ?? '')
-        .join(' ')
-        .trim()
-
-      setTranscript(nextTranscript)
+      setState((prev) => (prev === 'listening' ? 'idle' : prev))
     }
 
     recognitionRef.current = recognition
 
     return () => {
-      recognition.stop()
-      recognitionRef.current = null
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort()
+        } catch {}
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop())
+      }
     }
-  }, [locale, recognitionClass])
+  }, [locale])
+
+  const start = useCallback(async () => {
+    if (state === 'unsupported' || !recognitionRef.current) return
+
+    try {
+      setError(null)
+      
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      streamRef.current = stream
+
+      audioChunksRef.current = []
+      const mediaRecorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = mediaRecorder
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data)
+        }
+      }
+      mediaRecorder.start()
+
+      recognitionRef.current.start()
+      setState('listening')
+      
+    } catch (err) {
+      setError('마이크 권한을 허용해주세요.')
+      console.error(err)
+    }
+  }, [state])
+
+  const stop = useCallback((): Promise<Blob | null> => {
+    return new Promise((resolve) => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop()
+        } catch {}
+      }
+
+      const finishAndResolve = () => {
+        const finalBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop())
+          streamRef.current = null
+        }
+        setState('idle')
+        resolve(finalBlob)
+      }
+
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.onstop = finishAndResolve
+        mediaRecorderRef.current.stop()
+      } else {
+        finishAndResolve()
+      }
+    })
+  }, [])
+
+  const reset = useCallback(() => {
+    setTranscript('')
+    setError(null)
+  }, [])
 
   return {
     transcript,
     state,
     error,
-    isSupported: state !== 'unsupported',
-    setTranscript,
-    start: () => recognitionRef.current?.start(),
-    stop: () => recognitionRef.current?.stop(),
-    reset: () => setTranscript(''),
+    start,
+    stop,
+    reset,
+    setTranscript
   }
 }

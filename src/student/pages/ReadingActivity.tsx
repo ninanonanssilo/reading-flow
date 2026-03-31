@@ -4,11 +4,12 @@ import { useFlow } from '../../context/FlowContext'
 import { passages } from '../../data/passages'
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 import { analyzeReading } from '../../utils/basa'
+import { saveAudioBlob } from '../../utils/audioStorage'
 import StudentLayout from '../components/StudentLayout'
 
 export default function ReadingActivity() {
   const navigate = useNavigate()
-  const { draft, setTranscript, markReadingWindow, setAnalysis } = useFlow()
+  const { draft, setTranscript, markReadingWindow, setAnalysis, setAudioId } = useFlow()
   const speech = useSpeechRecognition('ko-KR')
   const [elapsed, setElapsed] = useState(0)
   const [finished, setFinished] = useState(false)
@@ -37,13 +38,21 @@ export default function ReadingActivity() {
     speech.start()
   }
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     const endedAt = Date.now()
-    speech.stop()
+    const blob = await speech.stop()
     const startedAt = draft.readingStartedAt ?? endedAt
+    
+    if (blob) {
+      const audioId = `audio_${Date.now()}`
+      await saveAudioBlob(audioId, blob)
+      setAudioId(audioId)
+    }
+
     const currentTranscript = speech.transcript
     const readingTimeSeconds = Math.max(1, ((endedAt - startedAt) / 1000) || elapsed || 1)
     const analysis = analyzeReading(passage.text, currentTranscript, readingTimeSeconds)
+    
     markReadingWindow(startedAt, endedAt)
     setTranscript(currentTranscript)
     setAnalysis(analysis)
@@ -77,9 +86,15 @@ export default function ReadingActivity() {
           {/* 녹음 상태 */}
           <div className={`border-2 p-4 shadow-sm ${isRecording ? 'border-red-400 bg-red-50' : 'border-[var(--border)] bg-white'}`}>
             <div className="flex items-center gap-3">
-              <div className={`h-3 w-3 ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-gray-300'}`} />
+              <div className={`h-3 w-3 ${isRecording ? 'bg-red-500 animate-pulse' : speech.state === 'loading' ? 'bg-yellow-400 animate-pulse' : 'bg-gray-300'}`} />
               <span className="text-sm font-bold text-[var(--text-main)]">
-                {isRecording ? '녹음 중... 또박또박 읽어보세요!' : finished ? '✓ 녹음 완료!' : '아래 버튼을 눌러 시작하세요'}
+                {speech.state === 'loading'
+                  ? '오프라인 음성인식 엔진(한국어)을 불러오는 중입니다... (최초 1회 약 40MB)'
+                  : isRecording
+                    ? '녹음 중... 또박또박 읽어보세요!'
+                    : finished 
+                      ? '✓ 녹음 완료!' 
+                      : '아래 버튼을 눌러 시작하세요'}
               </span>
             </div>
           </div>
@@ -207,9 +222,10 @@ export default function ReadingActivity() {
                   <button
                     type="button"
                     onClick={handleStart}
-                    className="flex-1 bg-[var(--secondary)] py-3.5 text-base font-extrabold text-white shadow-md transition hover:opacity-90"
+                    disabled={speech.state === 'loading'}
+                    className={`flex-1 py-3.5 text-base font-extrabold text-white shadow-md transition ${speech.state === 'loading' ? 'bg-gray-400 cursor-not-allowed opacity-70' : 'bg-[var(--secondary)] hover:opacity-90'}`}
                   >
-                    🎤 읽기 시작
+                    {speech.state === 'loading' ? '⏳ AI 음성 모델 로딩 중...' : '🎤 읽기 시작'}
                   </button>
                 ) : (
                   <button
