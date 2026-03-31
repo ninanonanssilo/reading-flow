@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { FlowDraft, GoalType, PlayerData, ReadingAnalysis, SelfAssessmentData } from '../types'
 import {
   appendSession,
@@ -33,6 +33,12 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
   const [draft, setDraft] = useState<FlowDraft>(() => readDraft())
   const [player, setPlayer] = useState<PlayerData>(() => readPlayerData())
 
+  // commitSession에서 최신 draft/player를 참조하기 위한 ref
+  const draftRef = useRef(draft)
+  draftRef.current = draft
+  const playerRef = useRef(player)
+  playerRef.current = player
+
   // draft가 변경될 때만 storage에 저장
   useEffect(() => {
     writeDraft(draft)
@@ -42,57 +48,92 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
     writePlayerData(player)
   }, [player])
 
+  // 안정적인 함수 참조 — draft/player가 바뀌어도 함수 참조는 유지
+  const setPassage = useCallback(
+    (passageId: string) => setDraft((current) => ({ ...current, passageId })),
+    [],
+  )
+  const setGoal = useCallback(
+    (goalType: GoalType, confidence: number) => setDraft((current) => ({ ...current, goalType, confidence })),
+    [],
+  )
+  const setTranscript = useCallback(
+    (transcript: string) => setDraft((current) => {
+      if (current.transcript === transcript) return current
+      return { ...current, transcript }
+    }),
+    [],
+  )
+  const markReadingWindow = useCallback(
+    (readingStartedAt: number | null, readingEndedAt: number | null) =>
+      setDraft((current) => ({ ...current, readingStartedAt, readingEndedAt })),
+    [],
+  )
+  const setAnalysis = useCallback(
+    (analysis: ReadingAnalysis) => setDraft((current) => ({ ...current, analysis })),
+    [],
+  )
+  const setSelfAssessment = useCallback(
+    (selfAssessment: SelfAssessmentData) => setDraft((current) => ({ ...current, selfAssessment })),
+    [],
+  )
+  const applyReclassify = useCallback(
+    (mappingIndex: number, type: 'substitution' | 'omission' | 'addition' | 'repetition' | 'selfCorrection') =>
+      setDraft((current) => {
+        if (!current.analysis) return current
+        return { ...current, analysis: reclassifyMapping(current.analysis, mappingIndex, type) }
+      }),
+    [],
+  )
+  const commitSession = useCallback(() => {
+    const d = draftRef.current
+    const p = playerRef.current
+    if (!d.passageId || !d.goalType || !d.analysis || !d.selfAssessment) {
+      return null
+    }
+
+    const stars = getStarsForAccuracy(d.analysis.accuracy)
+    const nextLevel = getLevel(p.totalSessions + 1, p.totalStars + stars)
+
+    const nextPlayer = appendSession(
+      p,
+      {
+        passageId: d.passageId,
+        goalType: d.goalType,
+        confidence: d.confidence,
+        analysis: d.analysis,
+        selfAssessment: d.selfAssessment,
+        timestamp: Date.now(),
+      },
+      stars,
+      nextLevel,
+    )
+
+    setPlayer(nextPlayer)
+    setDraft(defaultDraft)
+    clearDraft()
+    return { stars, nextLevel }
+  }, [])
+  const resetDraft = useCallback(() => {
+    setDraft(defaultDraft)
+    clearDraft()
+  }, [])
+
   const value = useMemo<FlowContextValue>(
     () => ({
       draft,
       player,
-      setPassage: (passageId) => setDraft((current) => ({ ...current, passageId })),
-      setGoal: (goalType, confidence) => setDraft((current) => ({ ...current, goalType, confidence })),
-      setTranscript: (transcript) => setDraft((current) => ({ ...current, transcript })),
-      markReadingWindow: (readingStartedAt, readingEndedAt) =>
-        setDraft((current) => ({ ...current, readingStartedAt, readingEndedAt })),
-      setAnalysis: (analysis) => setDraft((current) => ({ ...current, analysis })),
-      setSelfAssessment: (selfAssessment) => setDraft((current) => ({ ...current, selfAssessment })),
-      applyReclassify: (mappingIndex, type) =>
-        setDraft((current) => {
-          if (!current.analysis) {
-            return current
-          }
-          return { ...current, analysis: reclassifyMapping(current.analysis, mappingIndex, type) }
-        }),
-      commitSession: () => {
-        if (!draft.passageId || !draft.goalType || !draft.analysis || !draft.selfAssessment) {
-          return null
-        }
-
-        const stars = getStarsForAccuracy(draft.analysis.accuracy)
-        const nextLevel = getLevel(player.totalSessions + 1, player.totalStars + stars)
-
-        const nextPlayer = appendSession(
-          player,
-          {
-            passageId: draft.passageId,
-            goalType: draft.goalType,
-            confidence: draft.confidence,
-            analysis: draft.analysis,
-            selfAssessment: draft.selfAssessment,
-            timestamp: Date.now(),
-          },
-          stars,
-          nextLevel,
-        )
-
-        setPlayer(nextPlayer)
-        setDraft(defaultDraft)
-        clearDraft()
-        return { stars, nextLevel }
-      },
-      resetDraft: () => {
-        setDraft(defaultDraft)
-        clearDraft()
-      },
+      setPassage,
+      setGoal,
+      setTranscript,
+      markReadingWindow,
+      setAnalysis,
+      setSelfAssessment,
+      applyReclassify,
+      commitSession,
+      resetDraft,
     }),
-    [draft, player],
+    [draft, player, setPassage, setGoal, setTranscript, markReadingWindow, setAnalysis, setSelfAssessment, applyReclassify, commitSession, resetDraft],
   )
 
   return <FlowContext.Provider value={value}>{children}</FlowContext.Provider>

@@ -19,7 +19,7 @@ export default function ReadingActivity() {
 
   useEffect(() => {
     setTranscript(speech.transcript)
-  }, [setTranscript, speech.transcript])
+  }, [speech.transcript]) // setTranscript는 useCallback으로 안정적 참조
 
   useEffect(() => {
     if (speech.state !== 'listening' || !draft.readingStartedAt) return
