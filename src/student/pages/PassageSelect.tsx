@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFlow } from '../../context/FlowContext'
 import { passages } from '../../data/passages'
+import { useScreenLogger } from '../../hooks/useScreenLogger'
+import { useActivityLogger } from '../../hooks/useActivityLogger'
 import StudentLayout from '../components/StudentLayout'
 
 const difficultyStyle = {
@@ -13,6 +15,8 @@ const difficultyStyle = {
 const difficultyLabel = { easy: '쉬움', medium: '보통', hard: '어려움' }
 
 export default function PassageSelect() {
+  useScreenLogger('passage_select')
+  const log = useActivityLogger('passage_select')
   const navigate = useNavigate()
   const { draft, setPassage } = useFlow()
   const [filter, setFilter] = useState<'easy' | 'medium' | 'hard'>('easy')
@@ -64,7 +68,7 @@ export default function PassageSelect() {
             <button
               key={passage.id}
               type="button"
-              onClick={() => setPassage(passage.id)}
+              onClick={() => { log('passage_select', { passageId: passage.id }); setPassage(passage.id) }}
               className={`border-2 p-5 text-left transition hover:shadow-md ${
                 selected
                   ? 'border-[var(--primary)] bg-[var(--primary-light)] shadow-md'

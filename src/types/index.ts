@@ -84,6 +84,10 @@ export interface SessionData {
     hhairLevel: string
     message: string
   }
+  eventLogs?: unknown[]
+  screenDurations?: Record<string, number>
+  srlDistribution?: Record<string, number>
+  eventSessionId?: string
 }
 
 export interface Badge {

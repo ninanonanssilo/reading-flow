@@ -4,6 +4,8 @@ import { useFlow } from '../../context/FlowContext'
 import { analyzeReading } from '../../utils/basa'
 import { passages } from '../../data/passages'
 import { generateScaffold, getMetacognitionFeedback } from '../../utils/scaffold'
+import { useScreenLogger } from '../../hooks/useScreenLogger'
+import { useActivityLogger } from '../../hooks/useActivityLogger'
 import Lumi from '../components/Lumi'
 import MetricCard from '../components/MetricCard'
 import StudentLayout from '../components/StudentLayout'
@@ -17,6 +19,8 @@ const reclassifyOptions = [
 ] as const
 
 export default function ResultAnalysis() {
+  useScreenLogger('result_analysis')
+  const log = useActivityLogger('result_analysis')
   const navigate = useNavigate()
   const { draft, player, applyReclassify, commitSession, setAnalysis } = useFlow()
   const passage = useMemo(
@@ -164,7 +168,8 @@ export default function ResultAnalysis() {
                     {item.type !== 'correct' ? (
                       <select
                         value={item.type}
-                        onChange={(event) =>
+                        onChange={(event) => {
+                          log('error_reclassify', { wordIndex: index, fromType: item.type, toType: event.target.value })
                           applyReclassify(
                             index,
                             event.target.value as
@@ -174,7 +179,7 @@ export default function ResultAnalysis() {
                               | 'repetition'
                               | 'selfCorrection',
                           )
-                        }
+                        }}
                         className="border border-[var(--border)] bg-white px-3 py-2 text-xs font-bold"
                       >
                         {reclassifyOptions.map((option) => (

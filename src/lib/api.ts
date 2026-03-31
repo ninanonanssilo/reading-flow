@@ -104,6 +104,10 @@ export async function saveSession(params: SaveSessionParams): Promise<boolean> {
     reading_started_at: session.timestamp ? new Date(session.timestamp).toISOString() : null,
     reading_ended_at: null,
     audio_url: audioUrl,
+    event_logs: session.eventLogs ?? [],
+    screen_durations: session.screenDurations ?? {},
+    srl_distribution: session.srlDistribution ?? {},
+    event_session_id: session.eventSessionId ?? null,
   }
 
   const { error: sessionError } = await supabase!

@@ -1,4 +1,5 @@
 import { Link, Navigate, useLocation } from 'react-router-dom'
+import { useScreenLogger } from '../../hooks/useScreenLogger'
 import { useFlow } from '../../context/FlowContext'
 import { badges as badgeDefs, levels } from '../../data/constants'
 import Lumi from '../components/Lumi'
@@ -11,6 +12,7 @@ interface CompletionState {
 }
 
 export default function Completion() {
+  useScreenLogger('completion')
   const { player } = useFlow()
   const location = useLocation()
   const state = location.state as CompletionState | null

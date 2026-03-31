@@ -7,10 +7,14 @@ import { analyzeReading } from '../../utils/basa'
 import { saveAudioBlob } from '../../utils/audioStorage'
 import { getPreReadingScaffold, getDuringReadingScaffold, determineHHAIRLevel } from '../../utils/scaffold'
 import type { RegulationLevel } from '../../types'
+import { useScreenLogger } from '../../hooks/useScreenLogger'
+import { useActivityLogger } from '../../hooks/useActivityLogger'
 import Lumi from '../components/Lumi'
 import StudentLayout from '../components/StudentLayout'
 
 export default function ReadingActivity() {
+  useScreenLogger('reading_activity')
+  const log = useActivityLogger('reading_activity')
   const navigate = useNavigate()
   const { draft, player, setTranscript, markReadingWindow, setAnalysis, setAudioId } = useFlow()
   const speech = useSpeechRecognition('ko-KR')
@@ -34,6 +38,7 @@ export default function ReadingActivity() {
   }, [draft.readingStartedAt, speech.state])
 
   const handleStart = () => {
+    log('reading_start')
     markReadingWindow(Date.now(), null)
     setElapsed(0)
     setFinished(false)
@@ -43,6 +48,7 @@ export default function ReadingActivity() {
 
   const handleFinish = async () => {
     const endedAt = Date.now()
+    log('reading_end', { elapsedSeconds: elapsed, transcriptLength: speech.transcript.length })
     const blob = await speech.stop()
     const startedAt = draft.readingStartedAt ?? endedAt
 

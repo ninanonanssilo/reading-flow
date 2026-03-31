@@ -3,10 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { useFlow } from '../../context/FlowContext'
 import { goalOptions } from '../../data/constants'
 import { getPreReadingScaffold } from '../../utils/scaffold'
+import { useScreenLogger } from '../../hooks/useScreenLogger'
+import { useActivityLogger } from '../../hooks/useActivityLogger'
 import Lumi from '../components/Lumi'
 import StudentLayout from '../components/StudentLayout'
 
 export default function GoalSetting() {
+  useScreenLogger('goal_setting')
+  const log = useActivityLogger('goal_setting')
   const navigate = useNavigate()
   const { draft, player, setGoal } = useFlow()
   const [goal, setGoalState] = useState(draft.goalType ?? 'accuracy')
@@ -31,7 +35,7 @@ export default function GoalSetting() {
           <button
             key={option.type}
             type="button"
-            onClick={() => setGoalState(option.type)}
+            onClick={() => { log('goal_select', { goalType: option.type }); setGoalState(option.type) }}
             className={`border-2 p-6 text-left transition hover:shadow-md ${
               goal === option.type
                 ? 'border-[var(--primary)] bg-[var(--primary-light)] shadow-md'
@@ -61,7 +65,7 @@ export default function GoalSetting() {
           min="1"
           max="4"
           value={confidence}
-          onChange={(e) => setConfidence(Number(e.target.value))}
+          onChange={(e) => { const v = Number(e.target.value); log('confidence_set', { confidence: v }); setConfidence(v) }}
           className="mt-5 w-full accent-[var(--primary)]"
         />
         <div className="mt-2 flex justify-between text-sm font-bold">
@@ -75,6 +79,7 @@ export default function GoalSetting() {
         <button
           type="button"
           onClick={() => {
+            log('goal_confirm', { goalType: goal, confidence })
             setGoal(goal, confidence)
             navigate('/reading')
           }}

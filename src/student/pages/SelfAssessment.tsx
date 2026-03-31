@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFlow } from '../../context/FlowContext'
+import { useScreenLogger } from '../../hooks/useScreenLogger'
+import { useActivityLogger } from '../../hooks/useActivityLogger'
 import Lumi from '../components/Lumi'
 import StarRating from '../components/StarRating'
 import StudentLayout from '../components/StudentLayout'
 
 export default function SelfAssessment() {
+  useScreenLogger('self_assessment')
+  const log = useActivityLogger('self_assessment')
   const navigate = useNavigate()
   const { setSelfAssessment } = useFlow()
   const [selfRating, setSelfRating] = useState(3)
@@ -27,7 +31,7 @@ export default function SelfAssessment() {
           <h3 className="mb-1 text-lg font-extrabold text-[var(--text-main)]">오늘 나는 얼마나 잘 읽었을까요?</h3>
           <p className="mb-4 text-sm text-[var(--text-light)]">별을 눌러서 평가해보세요</p>
           <div className="flex justify-center">
-            <StarRating value={selfRating} onChange={setSelfRating} />
+            <StarRating value={selfRating} onChange={(v) => { log('self_rating_set', { selfRating: v }); setSelfRating(v) }} />
           </div>
         </div>
 
@@ -37,7 +41,7 @@ export default function SelfAssessment() {
           <div className="grid grid-cols-2 gap-4">
             <button
               type="button"
-              onClick={() => setFeltDifficulty(true)}
+              onClick={() => { log('difficulty_set', { feltDifficulty: true }); setFeltDifficulty(true) }}
               className={`border-2 p-5 text-center transition hover:shadow-sm ${
                 feltDifficulty === true
                   ? 'border-[var(--accent-orange)] bg-[var(--accent-orange-light)]'
@@ -50,7 +54,7 @@ export default function SelfAssessment() {
             </button>
             <button
               type="button"
-              onClick={() => setFeltDifficulty(false)}
+              onClick={() => { log('difficulty_set', { feltDifficulty: false }); setFeltDifficulty(false) }}
               className={`border-2 p-5 text-center transition hover:shadow-sm ${
                 feltDifficulty === false
                   ? 'border-[var(--secondary)] bg-[var(--secondary-light)]'
@@ -69,6 +73,7 @@ export default function SelfAssessment() {
           type="button"
           disabled={feltDifficulty === null}
           onClick={() => {
+            log('assessment_submit', { selfRating, feltDifficulty })
             setSelfAssessment({ selfRating, feltDifficulty: feltDifficulty ?? false })
             navigate('/results')
           }}

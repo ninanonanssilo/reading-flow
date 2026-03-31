@@ -12,6 +12,15 @@ import {
 import { badges as badgeDefs, getLevel, getStarsForAccuracy } from '../data/constants'
 import { reclassifyMapping } from '../utils/basa'
 import { generateScaffold } from '../utils/scaffold'
+import {
+  getEventBuffer,
+  clearEventBuffer,
+  startEventSession,
+  logEvent,
+  getSessionId,
+  calculateScreenDurations,
+  calculateSRLDistribution,
+} from '../utils/eventLogger'
 import { saveSession } from '../lib/api'
 import { getAudioBlob } from '../utils/audioStorage'
 
@@ -55,7 +64,10 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
 
   // 안정적인 함수 참조 — draft/player가 바뀌어도 함수 참조는 유지
   const setPassage = useCallback(
-    (passageId: string) => setDraft((current) => ({ ...current, passageId })),
+    (passageId: string) => {
+      startEventSession()
+      setDraft((current) => ({ ...current, passageId }))
+    },
     [],
   )
   const setGoal = useCallback(
@@ -111,6 +123,13 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
 
     const stars = getStarsForAccuracy(d.analysis.accuracy)
     const nextLevel = getLevel(p.totalSessions + 1, p.totalStars + stars)
+    // 이벤트 로그 수집
+    logEvent('session_complete', 'completion')
+    const eventLogs = getEventBuffer()
+    const screenDurations = calculateScreenDurations(eventLogs)
+    const srlDistribution = calculateSRLDistribution(eventLogs)
+    const eventSessionId = getSessionId()
+
     const scaffold = generateScaffold(d.analysis, d.goalType!, d.selfAssessment.selfRating, p.sessions)
     const session = {
       passageId: d.passageId,
@@ -125,7 +144,13 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
         hhairLevel: scaffold.hhairLevel,
         message: scaffold.message,
       },
+      eventLogs,
+      screenDurations,
+      srlDistribution,
+      eventSessionId,
     }
+
+    clearEventBuffer()
 
     const nextPlayer = appendSession(p, session, stars, nextLevel)
 
