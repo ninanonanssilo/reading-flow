@@ -5,6 +5,7 @@ import { passages } from '../../data/passages'
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 import { analyzeReading } from '../../utils/basa'
 import { saveAudioBlob } from '../../utils/audioStorage'
+import Lumi from '../components/Lumi'
 import StudentLayout from '../components/StudentLayout'
 
 export default function ReadingActivity() {
@@ -42,7 +43,7 @@ export default function ReadingActivity() {
     const endedAt = Date.now()
     const blob = await speech.stop()
     const startedAt = draft.readingStartedAt ?? endedAt
-    
+
     if (blob) {
       const audioId = `audio_${Date.now()}`
       await saveAudioBlob(audioId, blob)
@@ -52,7 +53,7 @@ export default function ReadingActivity() {
     const currentTranscript = speech.transcript
     const readingTimeSeconds = Math.max(1, ((endedAt - startedAt) / 1000) || elapsed || 1)
     const analysis = analyzeReading(passage.text, currentTranscript, readingTimeSeconds)
-    
+
     markReadingWindow(startedAt, endedAt)
     setTranscript(currentTranscript)
     setAnalysis(analysis)
@@ -83,27 +84,42 @@ export default function ReadingActivity() {
 
         {/* 컨트롤 & 결과 */}
         <div className="space-y-4">
-          {/* 녹음 상태 */}
+          {/* 녹음 상태 + 루미 */}
           <div className={`border-2 p-4 shadow-sm ${isRecording ? 'border-red-400 bg-red-50' : 'border-[var(--border)] bg-white'}`}>
             <div className="flex items-center gap-3">
-              <div className={`h-3 w-3 ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-gray-300'}`} />
-              <span className="text-sm font-bold text-[var(--text-main)]">
-                {isRecording
-                  ? '녹음 중... 또박또박 읽어보세요!'
-                  : finished 
-                    ? '✓ 녹음 완료!' 
-                    : '아래 버튼을 눌러 시작하세요'}
-              </span>
+              {isRecording ? (
+                <Lumi mood="listening" size="sm" message="루미가 잘 듣고 있어요..." />
+              ) : finished ? (
+                <Lumi mood="happy" size="sm" message="잘 읽었어!" showBubble={false} />
+              ) : (
+                <Lumi mood="idle" size="sm" message="준비됐으면 시작 버튼을 눌러!" />
+              )}
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <div className={`h-3 w-3 ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-gray-300'}`} />
+                  <span className="text-sm font-bold text-[var(--text-main)]">
+                    {isRecording
+                      ? '녹음 중... 또박또박 읽어보세요!'
+                      : finished
+                        ? '✓ 녹음 완료!'
+                        : '아래 버튼을 눌러 시작하세요'}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* 읽기 완료 패널 */}
           {finished && draft.analysis ? (
             <div className="space-y-4 animate-slide-up">
-              {/* 완료 헤더 */}
+              {/* 완료 헤더 + 루미 */}
               <div className="border-2 border-[var(--secondary)] bg-[var(--secondary-light)] p-5">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">✓</span>
+                  <Lumi
+                    mood={draft.analysis!.accuracy >= 80 ? 'cheering' : draft.analysis!.accuracy >= 60 ? 'happy' : 'thinking'}
+                    size="sm"
+                    showBubble={false}
+                  />
                   <div>
                     <h3 className="text-lg font-extrabold text-emerald-800">읽기 완료!</h3>
                     <p className="text-sm text-emerald-600">루미가 분석한 결과예요.</p>
@@ -166,7 +182,12 @@ export default function ReadingActivity() {
               </div>
 
               {/* 루미 한마디 */}
-              <div className="border-l-4 border-l-[var(--primary)] bg-[var(--primary-light)] p-4">
+              <div className="flex items-start gap-3 border-l-4 border-l-[var(--primary)] bg-[var(--primary-light)] p-4">
+                <Lumi
+                  mood={draft.analysis.accuracy >= 85 ? 'cheering' : draft.analysis.accuracy >= 60 ? 'happy' : 'idle'}
+                  size="sm"
+                  showBubble={false}
+                />
                 <p className="text-sm font-bold leading-relaxed text-[var(--primary-dark)]">
                   {draft.analysis.accuracy >= 85
                     ? '와! 아주 잘 읽었어요! 다음에는 더 어려운 지문에 도전해볼까요?'

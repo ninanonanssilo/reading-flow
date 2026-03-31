@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFlow } from '../../context/FlowContext'
+import Lumi from '../components/Lumi'
 import StarRating from '../components/StarRating'
 import StudentLayout from '../components/StudentLayout'
 
@@ -16,6 +17,11 @@ export default function SelfAssessment() {
       subtitle="별점과 난이도 판단을 남기면, AI 분석과 비교할 수 있어요."
     >
       <div className="mx-auto w-full max-w-lg space-y-5">
+        {/* 루미 */}
+        <div className="flex justify-center">
+          <Lumi mood="thinking" size="md" message="스스로 생각해봐. 얼마나 잘 읽었을까?" />
+        </div>
+
         {/* 별점 */}
         <div className="border border-[var(--border)] bg-white p-6 shadow-sm">
           <h3 className="mb-1 text-lg font-extrabold text-[var(--text-main)]">오늘 나는 얼마나 잘 읽었을까요?</h3>

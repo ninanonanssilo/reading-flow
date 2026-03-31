@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFlow } from '../../context/FlowContext'
 import { goalOptions } from '../../data/constants'
+import { goalMessages } from '../../data/lumiMessages'
+import type { GoalType } from '../../types'
+import Lumi from '../components/Lumi'
 import StudentLayout from '../components/StudentLayout'
 
 export default function GoalSetting() {
@@ -17,6 +20,13 @@ export default function GoalSetting() {
       title="오늘의 목표를 정해볼까요?"
       subtitle="루미가 제안하는 목표 중 하나를 골라보세요."
     >
+      <div className="mb-6 flex justify-center">
+        <Lumi
+          mood={goal ? 'happy' : 'thinking'}
+          size="md"
+          message={goal ? goalMessages[goal as GoalType] : '오늘은 무엇에 집중해볼까?'}
+        />
+      </div>
       <div className="grid gap-4 md:grid-cols-3">
         {goalOptions.map((option) => (
           <button

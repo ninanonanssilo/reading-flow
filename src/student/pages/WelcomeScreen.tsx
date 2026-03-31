@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useFlow } from '../../context/FlowContext'
 import { badges as badgeDefs, levels } from '../../data/constants'
+import Lumi from '../components/Lumi'
 
 export default function WelcomeScreen() {
   const { user, logout } = useAuth()
@@ -60,7 +61,7 @@ export default function WelcomeScreen() {
       <div className="mx-auto flex min-h-[calc(100vh-60px)] max-w-4xl flex-col items-center justify-center px-6 py-10">
         {/* 타이틀 */}
         <div className="mb-8 text-center">
-          <div className="mb-3 text-6xl">🧑‍🚀</div>
+          <Lumi mood="idle" size="lg" message="안녕! 오늘도 읽기 탐험을 떠나볼까?" />
           <h1 className="text-4xl font-extrabold text-[var(--text-main)] md:text-5xl">
             읽기 우주탐험대
           </h1>

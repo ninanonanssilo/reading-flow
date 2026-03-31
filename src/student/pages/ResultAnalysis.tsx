@@ -3,6 +3,8 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useFlow } from '../../context/FlowContext'
 import { analyzeReading } from '../../utils/basa'
 import { passages } from '../../data/passages'
+import { getMetacognitionFeedback, getScaffoldMessage } from '../../data/lumiMessages'
+import Lumi from '../components/Lumi'
 import MetricCard from '../components/MetricCard'
 import StudentLayout from '../components/StudentLayout'
 
@@ -53,12 +55,8 @@ export default function ResultAnalysis() {
   const aiRating = Math.max(1, Math.min(5, Math.round(analysis.accuracy / 20)))
   const gap = Math.abs(aiRating - selfAssessment.selfRating)
 
-  const scaffoldMessage =
-    analysis.accuracy >= 85
-      ? '정확도가 높습니다. 다음에는 더 긴 지문이나 빠른 읽기 목표에 도전해 보세요.'
-      : analysis.accuracy >= 60
-        ? '읽기 흐름은 유지됐지만 특정 오류가 반복됩니다. 헷갈린 어절을 중심으로 다시 읽어 보세요.'
-        : '지금은 쉬운 지문으로 안정감을 먼저 만드는 편이 좋습니다. 천천히 끊어 읽어도 괜찮습니다.'
+  const scaffold = getScaffoldMessage(analysis.accuracy, draft.goalType ?? 'accuracy', selfAssessment.selfRating)
+  const metacognition = getMetacognitionFeedback(gap)
 
   const handleComplete = () => {
     const result = commitSession()
@@ -92,11 +90,15 @@ export default function ResultAnalysis() {
                 <div className="mt-2 text-3xl font-extrabold text-[var(--text-main)]">{aiRating} / 5</div>
               </div>
             </div>
-            <p className="mt-4 text-sm leading-6 text-[var(--text-sub)]">
-              차이 값은 <strong>{gap}</strong>입니다. 차이가 작을수록 자신의 수행을 더 정확하게 판단한 것입니다.
-            </p>
-            <div className="mt-5 border-l-4 border-l-[var(--primary)] bg-[var(--primary-light)] p-5 text-sm leading-6 text-[var(--primary-dark)]">
-              루미 피드백: {scaffoldMessage}
+            <div className="mt-4 flex items-start gap-3">
+              <Lumi mood={metacognition.mood} size="sm" showBubble={false} />
+              <p className="text-sm leading-6 text-[var(--text-sub)]">
+                {metacognition.message} (차이: <strong>{gap}</strong>)
+              </p>
+            </div>
+            <div className="mt-5 flex items-start gap-3 border-l-4 border-l-[var(--primary)] bg-[var(--primary-light)] p-5">
+              <Lumi mood={scaffold.mood} size="sm" showBubble={false} />
+              <p className="text-sm leading-6 text-[var(--primary-dark)]">{scaffold.message}</p>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { Link, Navigate, useLocation } from 'react-router-dom'
 import { useFlow } from '../../context/FlowContext'
 import { badges as badgeDefs, levels } from '../../data/constants'
+import Lumi from '../components/Lumi'
 import type { Badge } from '../../types'
 
 interface CompletionState {
@@ -39,19 +40,16 @@ export default function Completion() {
         {/* 레벨업 연출 */}
         {didLevelUp ? (
           <div className="mb-6 text-center animate-slide-up">
-            <div className="mb-2 text-6xl animate-bounce">{currentLevel.icon}</div>
-            <h1 className="text-3xl font-extrabold text-[var(--text-main)]">레벨 업!</h1>
+            <Lumi mood="cheering" size="lg" message={`축하해! Lv.${currentLevel.level} ${currentLevel.name}에 도달했어!`} />
+            <h1 className="mt-3 text-3xl font-extrabold text-[var(--text-main)]">레벨 업!</h1>
             <p className="mt-1 text-lg font-bold text-[var(--primary)]">
               Lv.{currentLevel.level} {currentLevel.name} 도달!
             </p>
-            <div className="mt-3 inline-block bg-[var(--primary)] px-6 py-2 text-sm font-extrabold text-white shadow-md">
-              축하해요! 새로운 단계에 올랐어요!
-            </div>
           </div>
         ) : (
           <div className="mb-6 text-center animate-slide-up">
-            <div className="mb-2 text-6xl">{currentLevel.icon}</div>
-            <h1 className="text-3xl font-extrabold text-[var(--text-main)]">오늘의 탐험 완료!</h1>
+            <Lumi mood="happy" size="lg" message="오늘도 잘했어! 다음에 또 만나자." />
+            <h1 className="mt-3 text-3xl font-extrabold text-[var(--text-main)]">오늘의 탐험 완료!</h1>
             <p className="mt-2 text-base text-[var(--text-sub)]">잘했어요, {player.name}! 결과가 저장되었습니다.</p>
           </div>
         )}
@@ -66,8 +64,8 @@ export default function Completion() {
         {newBadges.length > 0 && (
           <div className="mb-4 w-full border-2 border-[var(--accent-yellow)] bg-amber-50 p-5 shadow-sm animate-slide-up">
             <div className="mb-3 flex items-center gap-2">
-              <span className="text-xl">🏅</span>
-              <h3 className="text-base font-extrabold text-amber-800">새 뱃지 획득!</h3>
+              <Lumi mood="cheering" size="sm" showBubble={false} />
+              <h3 className="text-base font-extrabold text-amber-800">새 뱃지다! 컬렉션이 늘었어!</h3>
             </div>
             <div className="space-y-2">
               {newBadges.map((b) => {
