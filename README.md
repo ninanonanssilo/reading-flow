@@ -1,61 +1,127 @@
-# Reading Flow - 읽기 우주탐험대
+# 🧑‍🚀 리딩플로우 (Reading Flow)
 
-**읽기 유창성 학습 웹 앱** | BASA 기반 읽기 분석 + 자기조절학습(SRL)
-
-> **Live Demo**: https://reading-flow-3yq.pages.dev/
-
----
-
-## 한국어
-
-### 소개
-Reading Flow는 초등학생의 **읽기 유창성(Reading Fluency)** 향상을 위한 웹 기반 학습 도구입니다. 음성 인식 기술을 활용하여 학생이 소리 내어 읽은 내용을 실시간 분석하고, BASA(기초학력검사) 기준으로 오류를 분류합니다.
-
-### 주요 기능
-- **음성 인식 기반 읽기 분석**: Web Speech API로 실시간 전사 및 BASA 오류 분류 (대치, 생략, 첨가, 반복, 자기교정)
-- **자기조절학습(SRL) 지원**: 목표 설정 → 읽기 → 자기평가 → 결과 비교의 메타인지 학습 흐름
-- **보상 시스템**: 별, 뱃지, 레벨업을 통한 학습 동기 부여
-- **교사 대시보드**: 학생별 CWPM 추이, 오류 분포, 자기조절 수준 확인
-- **회원 시스템**: 학생/교사 역할 분리, 개인정보 동의 관리
-
-### 기술 스택
-React + TypeScript + Vite + Tailwind CSS v4 + Cloudflare Pages
+> 초등학생을 위한 **자기주도 음성 인식 독서 코칭 플랫폼**  
+> 🌐 **라이브 데모**: https://reading-flow-3yq.pages.dev
 
 ---
 
-## English
+## 📖 소개
 
-### About
-Reading Flow is a web-based learning tool designed to improve **reading fluency** for elementary school students. It uses speech recognition to analyze read-aloud performance in real-time and classifies errors based on the BASA (Basic Academic Skills Assessment) framework.
-
-### Key Features
-- **Speech Recognition Reading Analysis**: Real-time transcription via Web Speech API with BASA error classification (substitution, omission, addition, repetition, self-correction)
-- **Self-Regulated Learning (SRL)**: Goal setting → Reading → Self-assessment → Result comparison for metacognitive learning
-- **Reward System**: Stars, badges, and level-ups to motivate learners
-- **Teacher Dashboard**: Track student CWPM trends, error distributions, and self-regulation levels
-- **Auth System**: Separate student/teacher roles with privacy consent management
-
-### Tech Stack
-React + TypeScript + Vite + Tailwind CSS v4 + Cloudflare Pages
+리딩플로우는 학생이 스스로 목표를 설정하고 소리 내어 읽으며, AI와 교사의 피드백을 통해 문해력과 읽기 유창성을 기를 수 있는 웹 기반 독서 코칭 앱입니다.  
+교사는 별도 대시보드에서 학생의 읽기 기록·오디오를 실시간으로 확인하고 피드백 메모를 남길 수 있습니다.
 
 ---
 
-## Getting Started
+## ✨ 핵심 기능
+
+| 기능 | 설명 |
+|------|------|
+| 🎙️ **브라우저 내장 음성인식** | 크롬/엣지 내장 Web Speech API로 한국어 실시간 텍스트 변환 |
+| 🎧 **학생 오디오 저장** | MediaRecorder로 녹음 → IndexedDB(WebM)에 안전하게 보관 |
+| 📊 **BASA 기반 읽기 분석** | CWPM, 정확도, 대치·생략·첨가·자기교정 오류 유형 자동 채점 |
+| 📚 **난이도별 30개 지문** | 초등 1-2(쉬움) / 3-4학년(보통) / 5-6학년(어려움) 교육과정 기준 |
+| 🏆 **SRL 자기조절학습 지원** | 목표 설정 → 읽기 → 자기평가 흐름으로 메타인지 훈련 |
+| 👨‍🏫 **교사 대시보드** | 학생별 CWPM 트렌드, 오류 분포, 오디오 재생, 피드백 메모 |
+
+---
+
+## 🎮 학생 화면 워크스루 (5단계)
+
+### STEP 1 · 지문 선택
+`단계 선택` 탭에서 **쉬움 / 보통 / 어려움** 중 자신의 실력에 맞는 지문을 고릅니다.  
+각 난이도마다 10개씩, 총 30개의 지문이 제공됩니다.
+
+### STEP 2 · 목표 & 자신감 설정
+읽기 전 목표(유창성 향상 / 정확도 향상 / 오류 줄이기)를 고르고,  
+자신감 슬라이더(1~4)로 스스로의 기대 수준을 입력합니다. (계획 단계)
+
+### STEP 3 · 읽기 활동
+🎤 **읽기 시작** 버튼을 누르면 마이크가 켜지고 실시간 전사가 시작됩니다.  
+동시에 MediaRecorder가 목소리를 녹음하여 브라우저에 저장합니다.
+
+### STEP 4 · 자기 평가
+읽기가 끝나면 스스로 별점(1~5)을 매기고 난이도 체감을 확인합니다.
+
+### STEP 5 · AI 분석 결과 & 보상
+| 지표 | 내용 |
+|------|------|
+| CWPM | 1분당 정확히 읽은 어절 수 |
+| 정확도 | 올바르게 읽은 음절 비율 (%) |
+| 오류 분류 | 대치 / 생략 / 첨가 / 반복 / 자기교정 |
+| 보상 | 별 포인트 적립, 레벨업, 뱃지 획득 |
+
+---
+
+## 👨‍🏫 교사 대시보드 워크스루
+
+> URL: `/teacher` — 교사 계정으로 로그인 후 이용
+
+### 📊 학급 전체 통계
+- 학급 평균 CWPM 추이 그래프
+- BASA 오류 유형 전체 분포 차트
+- 학생별 자기조절 수준(HHAIR) 현황 패널
+- SRL 프로세스 누적 막대 그래프
+
+### 🔍 개별 학생 모니터링
+- 학생 행을 **클릭**하면 상세 분석 섹션으로 **자동 스크롤**
+- 개인별 CWPM 추이 선그래프 + 오류 파이 차트
+- 실제 브라우저에서 학생이 완료한 기록이 목록 상단에 자동 합산
+
+### 🎧 오디오 재생 & 피드백
+- 교사가 학생의 목소리를 직접 재생하여 발음 확인
+- 텍스트 메모 작성 → 저장 버튼으로 피드백 영구 보관
+
+---
+
+## 🗂️ 지문 목록 (난이도별)
+
+| 난이도 | 학년 | 글 길이 | 예시 제목 |
+|--------|------|---------|----------|
+| 🟢 쉬움 | 1-2학년 | 3문장 / ~50자 | 봄이 왔어요, 내 강아지, 무지개 |
+| 🟡 보통 | 3-4학년 | 7문장 / ~180자 | 두발자전거, 도서관 나들이, 기차 여행 |
+| 🔴 어려움 | 5-6학년 | 7문장 / ~300자 | 산호초, 한글과 세종대왕, 비행기 원리 |
+
+---
+
+## 🔐 회원가입 & 개인정보
+
+회원가입 시 수집하는 정보:
+- **이름(실명)**, **생년월일**, 아이디, 비밀번호
+- 읽기 활동 기록 (정확도, 속도, 오류 유형)
+- 자기평가 데이터, 학습 진행 현황
+
+> 모든 데이터는 **브라우저 로컬 스토리지 / IndexedDB에만 저장**됩니다.  
+> 외부 서버로의 개인정보 전송은 일체 없습니다.
+
+---
+
+## 🛠️ 기술 스택
+
+| 구분 | 기술 |
+|------|------|
+| Frontend | React 18 + TypeScript + Vite |
+| Styling | Tailwind CSS |
+| 음성인식 | Web Speech API (Chrome/Edge 내장) |
+| 오디오 저장 | MediaRecorder API + IndexedDB |
+| 라우팅 | React Router v6 |
+| 차트 | Chart.js + react-chartjs-2 |
+| 배포 | Cloudflare Pages |
+
+---
+
+## 🚀 로컬 실행
 
 ```bash
+git clone https://github.com/ninanonanssilo/reading-flow.git
+cd reading-flow
 npm install
 npm run dev
 ```
 
-Open http://localhost:5173 in your browser.
+브라우저에서 http://localhost:5173 접속
 
-## Build & Deploy
+---
 
-```bash
-npm run build
-npx wrangler pages deploy dist --project-name=reading-flow
-```
+## 📄 라이선스
 
-## License
-
-MIT
+MIT License
