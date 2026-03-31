@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useFlow } from '../../context/FlowContext'
 import { analyzeReading } from '../../utils/basa'
 import { passages } from '../../data/passages'
-import { getMetacognitionFeedback, getScaffoldMessage } from '../../data/lumiMessages'
+import { generateScaffold, getMetacognitionFeedback } from '../../utils/scaffold'
 import Lumi from '../components/Lumi'
 import MetricCard from '../components/MetricCard'
 import StudentLayout from '../components/StudentLayout'
@@ -18,7 +18,7 @@ const reclassifyOptions = [
 
 export default function ResultAnalysis() {
   const navigate = useNavigate()
-  const { draft, applyReclassify, commitSession, setAnalysis } = useFlow()
+  const { draft, player, applyReclassify, commitSession, setAnalysis } = useFlow()
   const passage = useMemo(
     () => passages.find((item) => item.id === draft.passageId) ?? null,
     [draft.passageId],
@@ -55,8 +55,8 @@ export default function ResultAnalysis() {
   const aiRating = Math.max(1, Math.min(5, Math.round(analysis.accuracy / 20)))
   const gap = Math.abs(aiRating - selfAssessment.selfRating)
 
-  const scaffold = getScaffoldMessage(analysis.accuracy, draft.goalType ?? 'accuracy', selfAssessment.selfRating)
-  const metacognition = getMetacognitionFeedback(gap)
+  const scaffold = generateScaffold(analysis, draft.goalType ?? 'accuracy', selfAssessment.selfRating, player.sessions)
+  const metacognition = getMetacognitionFeedback(gap, selfAssessment.selfRating, aiRating)
 
   const handleComplete = () => {
     const result = commitSession()
@@ -96,9 +96,39 @@ export default function ResultAnalysis() {
                 {metacognition.message} (차이: <strong>{gap}</strong>)
               </p>
             </div>
-            <div className="mt-5 flex items-start gap-3 border-l-4 border-l-[var(--primary)] bg-[var(--primary-light)] p-5">
-              <Lumi mood={scaffold.mood} size="sm" showBubble={false} />
-              <p className="text-sm leading-6 text-[var(--primary-dark)]">{scaffold.message}</p>
+          </div>
+
+          {/* 적응적 스캐폴딩 */}
+          <div className="flex gap-4 items-start border border-[var(--border)] bg-white p-5 shadow-sm">
+            <Lumi mood={scaffold.mood} size="sm" showBubble={false} />
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-bold text-white bg-[var(--primary)] px-2 py-0.5">
+                  {scaffold.scaffoldType === 'directive' ? 'AI 안내'
+                    : scaffold.scaffoldType === 'suggestive' ? '루미 제안'
+                    : scaffold.scaffoldType === 'reflective' ? '생각해보기'
+                    : '응원'}
+                </span>
+                <span className="text-xs text-[var(--text-light)]">
+                  {scaffold.hhairLevel === 'ai-adjusted' ? 'AI 조절'
+                    : scaffold.hhairLevel === 'co-regulated' ? '공동 조절'
+                    : scaffold.hhairLevel === 'shared-regulated' ? '공유 조절'
+                    : '자기 조절'}
+                </span>
+              </div>
+              <p className="text-sm font-bold leading-relaxed text-[var(--text-main)]">
+                {scaffold.message}
+              </p>
+              {scaffold.hint && (
+                <p className="mt-2 text-sm text-[var(--primary)] bg-[var(--primary-light)] px-3 py-2">
+                  {scaffold.hint}
+                </p>
+              )}
+              {scaffold.suggestedAction && (
+                <p className="mt-2 text-xs font-bold text-[var(--primary)]">
+                  {scaffold.suggestedAction}
+                </p>
+              )}
             </div>
           </div>
         </div>

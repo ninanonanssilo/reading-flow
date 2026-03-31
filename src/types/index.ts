@@ -79,6 +79,11 @@ export interface SessionData {
   timestamp: number
   audioId?: string // Optional ID linking to IndexedDB audio blob
   teacherMemo?: string // Optional teacher feedback text
+  scaffoldOutput?: {
+    scaffoldType: string
+    hhairLevel: string
+    message: string
+  }
 }
 
 export interface Badge {
@@ -93,6 +98,7 @@ export interface PlayerData {
   level: number
   sessions: SessionData[]
   badges: Badge[]
+  currentHHAIR?: RegulationLevel
 }
 
 export interface BadgeDef {

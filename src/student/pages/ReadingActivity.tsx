@@ -5,12 +5,14 @@ import { passages } from '../../data/passages'
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 import { analyzeReading } from '../../utils/basa'
 import { saveAudioBlob } from '../../utils/audioStorage'
+import { getPreReadingScaffold, getDuringReadingScaffold, determineHHAIRLevel } from '../../utils/scaffold'
+import type { RegulationLevel } from '../../types'
 import Lumi from '../components/Lumi'
 import StudentLayout from '../components/StudentLayout'
 
 export default function ReadingActivity() {
   const navigate = useNavigate()
-  const { draft, setTranscript, markReadingWindow, setAnalysis, setAudioId } = useFlow()
+  const { draft, player, setTranscript, markReadingWindow, setAnalysis, setAudioId } = useFlow()
   const speech = useSpeechRecognition('ko-KR')
   const [elapsed, setElapsed] = useState(0)
   const [finished, setFinished] = useState(false)
@@ -60,6 +62,23 @@ export default function ReadingActivity() {
     setFinished(true)
   }
 
+  const currentHHAIR: RegulationLevel = useMemo(
+    () => player.sessions.length >= 3
+      ? determineHHAIRLevel(player.sessions, player.sessions[player.sessions.length - 1]?.analysis.accuracy ?? 0)
+      : 'ai-adjusted',
+    [player.sessions],
+  )
+
+  const preScaffold = useMemo(
+    () => getPreReadingScaffold(draft.goalType ?? 'accuracy', player.sessions),
+    [draft.goalType, player.sessions],
+  )
+
+  const duringScaffold = useMemo(
+    () => getDuringReadingScaffold(currentHHAIR),
+    [currentHHAIR],
+  )
+
   const isRecording = speech.state === 'listening'
 
   return (
@@ -88,11 +107,11 @@ export default function ReadingActivity() {
           <div className={`border-2 p-4 shadow-sm ${isRecording ? 'border-red-400 bg-red-50' : 'border-[var(--border)] bg-white'}`}>
             <div className="flex items-center gap-3">
               {isRecording ? (
-                <Lumi mood="listening" size="sm" message="루미가 잘 듣고 있어요..." />
+                <Lumi mood={duringScaffold.mood} size="sm" message={duringScaffold.message} />
               ) : finished ? (
                 <Lumi mood="happy" size="sm" message="잘 읽었어!" showBubble={false} />
               ) : (
-                <Lumi mood="idle" size="sm" message="준비됐으면 시작 버튼을 눌러!" />
+                <Lumi mood={preScaffold.mood} size="sm" message={preScaffold.message} />
               )}
               <div className="flex-1">
                 <div className="flex items-center gap-2">

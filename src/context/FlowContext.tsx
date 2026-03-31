@@ -11,6 +11,7 @@ import {
 } from '../utils/storage'
 import { badges as badgeDefs, getLevel, getStarsForAccuracy } from '../data/constants'
 import { reclassifyMapping } from '../utils/basa'
+import { generateScaffold } from '../utils/scaffold'
 
 interface FlowContextValue {
   draft: FlowDraft
@@ -108,6 +109,7 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
 
     const stars = getStarsForAccuracy(d.analysis.accuracy)
     const nextLevel = getLevel(p.totalSessions + 1, p.totalStars + stars)
+    const scaffold = generateScaffold(d.analysis, d.goalType!, d.selfAssessment.selfRating, p.sessions)
     const session = {
       passageId: d.passageId,
       goalType: d.goalType,
@@ -116,6 +118,11 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
       selfAssessment: d.selfAssessment,
       audioId: d.audioId,
       timestamp: Date.now(),
+      scaffoldOutput: {
+        scaffoldType: scaffold.scaffoldType,
+        hhairLevel: scaffold.hhairLevel,
+        message: scaffold.message,
+      },
     }
 
     const nextPlayer = appendSession(p, session, stars, nextLevel)

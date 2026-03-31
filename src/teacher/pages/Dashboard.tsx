@@ -17,6 +17,7 @@ import { useAuth } from '../../context/AuthContext'
 import { mockStudents } from '../../data/mockStudents'
 import { readPlayerData, writePlayerData } from '../../utils/storage'
 import { getAudioBlob } from '../../utils/audioStorage'
+import { determineHHAIRLevel } from '../../utils/scaffold'
 
 ChartJS.register(
   CategoryScale,
@@ -72,7 +73,9 @@ export default function Dashboard() {
         },
         srlScore: 82,
         srProcesses: mockStudents[0].srProcesses,
-        regulationLevel: 'co-regulated',
+        regulationLevel: realPlayer.sessions.length >= 3
+          ? determineHHAIRLevel(realPlayer.sessions, realPlayer.sessions[realPlayer.sessions.length - 1].analysis.accuracy)
+          : 'co-regulated',
         srlBadge: '성실형',
         trend: '▲',
         sessions: realPlayer.sessions, // 실제 세션 보관

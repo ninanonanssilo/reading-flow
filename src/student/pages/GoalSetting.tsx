@@ -2,14 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFlow } from '../../context/FlowContext'
 import { goalOptions } from '../../data/constants'
-import { goalMessages } from '../../data/lumiMessages'
-import type { GoalType } from '../../types'
+import { getPreReadingScaffold } from '../../utils/scaffold'
 import Lumi from '../components/Lumi'
 import StudentLayout from '../components/StudentLayout'
 
 export default function GoalSetting() {
   const navigate = useNavigate()
-  const { draft, setGoal } = useFlow()
+  const { draft, player, setGoal } = useFlow()
   const [goal, setGoalState] = useState(draft.goalType ?? 'accuracy')
   const [confidence, setConfidence] = useState(draft.confidence)
 
@@ -22,9 +21,9 @@ export default function GoalSetting() {
     >
       <div className="mb-6 flex justify-center">
         <Lumi
-          mood={goal ? 'happy' : 'thinking'}
+          mood={goal ? getPreReadingScaffold(goal, player.sessions).mood : 'thinking'}
           size="md"
-          message={goal ? goalMessages[goal as GoalType] : '오늘은 무엇에 집중해볼까?'}
+          message={goal ? getPreReadingScaffold(goal, player.sessions).message : '오늘은 무엇에 집중해볼까?'}
         />
       </div>
       <div className="grid gap-4 md:grid-cols-3">
