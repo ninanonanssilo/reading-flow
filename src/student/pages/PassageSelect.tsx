@@ -27,7 +27,7 @@ export default function PassageSelect() {
       {/* 단계 선택 영역 */}
       <div className="mb-6 flex flex-col md:flex-row md:items-center gap-4 border-b border-[var(--border)] pb-4">
         <span className="bg-[var(--primary)] text-white px-3 py-1 text-sm font-extrabold shadow-sm">
-          [단계 선택]
+          단계 선택
         </span>
         <div className="flex gap-2">
         <button
