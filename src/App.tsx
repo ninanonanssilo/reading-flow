@@ -21,7 +21,7 @@ function Loading() {
   return (
     <div className="flex h-screen items-center justify-center bg-[var(--bg-main)]">
       <div className="text-center">
-        <div className="mb-4 text-4xl animate-bounce">📚</div>
+        <div className="mb-4 text-4xl animate-bounce">🧑‍🚀</div>
         <p className="text-[var(--text-light)]">로딩 중...</p>
       </div>
     </div>

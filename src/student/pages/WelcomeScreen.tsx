@@ -41,7 +41,7 @@ export default function WelcomeScreen() {
           to="/"
           className="flex items-center gap-2 border border-[var(--border)] bg-white px-5 py-2 text-base font-extrabold text-[var(--primary)] shadow-sm"
         >
-          <span className="text-lg">📚</span> 리딩플로우
+          <span className="text-lg">🧑‍🚀</span> 리딩플로우
         </Link>
         <div className="flex items-center gap-2">
           {user && <span className="text-sm font-bold text-[var(--text-sub)]">{user.username}</span>}
@@ -58,7 +58,7 @@ export default function WelcomeScreen() {
       <div className="mx-auto flex min-h-[calc(100vh-60px)] max-w-4xl flex-col items-center justify-center px-6 py-10">
         {/* 타이틀 */}
         <div className="mb-8 text-center">
-          <div className="mb-3 text-6xl">📚</div>
+          <div className="mb-3 text-6xl">🧑‍🚀</div>
           <h1 className="text-4xl font-extrabold text-[var(--text-main)] md:text-5xl">
             읽기 우주탐험대
           </h1>

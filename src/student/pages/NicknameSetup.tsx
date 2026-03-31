@@ -20,7 +20,7 @@ export default function NicknameSetup() {
     <main className="min-h-screen bg-[var(--bg-main)]">
       <div className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center px-6 py-10">
         <div className="mb-8 text-center animate-slide-up">
-          <div className="mb-4 text-6xl">📚</div>
+          <div className="mb-4 text-6xl">🧑‍🚀</div>
           <h1 className="text-3xl font-extrabold text-[var(--text-main)]">반가워요!</h1>
           <p className="mt-3 text-base text-[var(--text-sub)]">
             읽기 우주탐험대에서 사용할<br />닉네임을 정해주세요.
