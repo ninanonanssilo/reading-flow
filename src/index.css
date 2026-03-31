@@ -1,24 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  --bg-warm: #FFF9F0;
+  --bg-main: #F5F7FA;
   --bg-card: #FFFFFF;
-  --primary: #FF7043;
-  --primary-light: #FFAB91;
-  --secondary: #66BB6A;
-  --accent-yellow: #FFD54F;
-  --accent-blue: #42A5F5;
-  --accent-purple: #AB47BC;
-  --text-main: #3E2723;
-  --text-sub: #795548;
-  --text-light: #A1887F;
-  --shadow-warm: 0 4px 20px rgba(255, 112, 67, 0.12);
+  --primary: #2B7FFF;
+  --primary-dark: #1A5DC8;
+  --primary-light: #E8F1FF;
+  --secondary: #00C9A7;
+  --secondary-light: #E6FBF6;
+  --accent-orange: #FF6B35;
+  --accent-orange-light: #FFF0EB;
+  --accent-yellow: #FFB800;
+  --accent-purple: #7C5CFC;
+  --text-main: #1A1D23;
+  --text-sub: #4A5568;
+  --text-light: #94A3B8;
+  --border: #E2E8F0;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 body {
   margin: 0;
   font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: var(--bg-warm);
+  background: var(--bg-main);
   color: var(--text-main);
 }
 
@@ -26,12 +31,10 @@ a, button, select, [role="button"], input[type="range"], label[for] {
   cursor: pointer;
 }
 
-/* 부드러운 스크롤 */
 html {
   scroll-behavior: smooth;
 }
 
-/* 스크롤바 숨기기 (진행 바) */
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
@@ -40,7 +43,6 @@ html {
   scrollbar-width: none;
 }
 
-/* 반짝이 애니메이션 */
 @keyframes sparkle {
   0%, 100% { opacity: 0.4; transform: scale(0.8); }
   50% { opacity: 1; transform: scale(1.2); }
@@ -48,7 +50,12 @@ html {
 
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-sparkle {
@@ -57,4 +64,8 @@ html {
 
 .animate-float {
   animation: float 3s ease-in-out infinite;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
 }

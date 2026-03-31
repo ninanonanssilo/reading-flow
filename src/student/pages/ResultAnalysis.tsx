@@ -22,7 +22,6 @@ export default function ResultAnalysis() {
     [draft.passageId],
   )
 
-  // analysis가 없지만 transcript와 passage가 있으면 직접 계산
   useEffect(() => {
     if (draft.analysis || !passage || !draft.transcript) return
     const startedAt = draft.readingStartedAt ?? Date.now()
@@ -44,7 +43,7 @@ export default function ResultAnalysis() {
     return (
       <StudentLayout title="분석 중..." subtitle="읽기 결과를 분석하고 있습니다." step="결과 분석">
         <div className="flex items-center justify-center py-20">
-          <div className="text-4xl animate-spin">🔄</div>
+          <div className="text-4xl animate-spin">⏳</div>
         </div>
       </StudentLayout>
     )
@@ -73,7 +72,7 @@ export default function ResultAnalysis() {
       step="screen3"
     >
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <div className="space-y-6">
+        <div className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <MetricCard label="정확도" value={`${analysis.accuracy}%`} />
             <MetricCard label="CWPM" value={`${analysis.cwpm}`} tone="green" />
@@ -81,35 +80,34 @@ export default function ResultAnalysis() {
             <MetricCard label="총 오류 수" value={`${analysis.totalErrors}`} tone="orange" />
           </div>
 
-          <div className="rounded-[2rem] border border-white/70 bg-white/85 p-6 shadow-sm">
-            <p className="text-sm font-semibold text-slate-500">메타인지 비교</p>
+          <div className="border border-[var(--border)] bg-white p-6 shadow-sm">
+            <p className="text-sm font-bold text-[var(--text-light)]">메타인지 비교</p>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <div className="rounded-2xl bg-slate-50 p-5">
-                <div className="text-sm font-semibold text-slate-500">자기평가</div>
-                <div className="mt-2 text-3xl font-black">{selfAssessment.selfRating} / 5</div>
+              <div className="bg-[var(--bg-main)] p-5">
+                <div className="text-sm font-bold text-[var(--text-light)]">자기평가</div>
+                <div className="mt-2 text-3xl font-extrabold text-[var(--text-main)]">{selfAssessment.selfRating} / 5</div>
               </div>
-              <div className="rounded-2xl bg-slate-50 p-5">
-                <div className="text-sm font-semibold text-slate-500">AI 추정</div>
-                <div className="mt-2 text-3xl font-black">{aiRating} / 5</div>
+              <div className="bg-[var(--bg-main)] p-5">
+                <div className="text-sm font-bold text-[var(--text-light)]">AI 추정</div>
+                <div className="mt-2 text-3xl font-extrabold text-[var(--text-main)]">{aiRating} / 5</div>
               </div>
             </div>
-            <p className="mt-4 text-sm leading-6 text-slate-600">
-              차이 값은 <strong>{gap}</strong>입니다. 차이가 작을수록 자신의 수행을 더 정확하게 판단한
-              것입니다.
+            <p className="mt-4 text-sm leading-6 text-[var(--text-sub)]">
+              차이 값은 <strong>{gap}</strong>입니다. 차이가 작을수록 자신의 수행을 더 정확하게 판단한 것입니다.
             </p>
-            <div className="mt-5 rounded-2xl bg-sky-50 p-5 text-sm leading-6 text-sky-900">
+            <div className="mt-5 border-l-4 border-l-[var(--primary)] bg-[var(--primary-light)] p-5 text-sm leading-6 text-[var(--primary-dark)]">
               루미 피드백: {scaffoldMessage}
             </div>
           </div>
         </div>
 
-        <div className="rounded-[2rem] border border-white/70 bg-white/85 p-6 shadow-sm">
+        <div className="border border-[var(--border)] bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-slate-500">BASA 어절 매핑</p>
-              <h2 className="mt-1 text-2xl font-black">{passage.title}</h2>
+              <p className="text-sm font-bold text-[var(--text-light)]">BASA 어절 매핑</p>
+              <h2 className="mt-1 text-2xl font-extrabold text-[var(--text-main)]">{passage.title}</h2>
             </div>
-            <div className="text-right text-sm text-slate-500">
+            <div className="text-right text-sm text-[var(--text-light)]">
               <div>대치 {analysis.errorCounts.substitution}</div>
               <div>생략 {analysis.errorCounts.omission}</div>
               <div>첨가 {analysis.errorCounts.addition}</div>
@@ -117,18 +115,18 @@ export default function ResultAnalysis() {
           </div>
           <div className="mt-6 max-h-[34rem] space-y-3 overflow-auto pr-2">
             {analysis.errors.mapping.map((item, index) => (
-              <div key={`${item.original}-${index}`} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+              <div key={`${item.original}-${index}`} className="border border-[var(--border)] bg-[var(--bg-main)] p-4">
                 <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto] md:items-center">
                   <div>
-                    <div className="text-xs font-semibold text-slate-400">원문</div>
-                    <div className="text-lg font-bold">{item.original}</div>
+                    <div className="text-xs font-bold text-[var(--text-light)]">원문</div>
+                    <div className="text-lg font-bold text-[var(--text-main)]">{item.original}</div>
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-slate-400">전사</div>
-                    <div className="text-lg font-bold text-slate-700">{item.recognized || '없음'}</div>
+                    <div className="text-xs font-bold text-[var(--text-light)]">전사</div>
+                    <div className="text-lg font-bold text-[var(--text-sub)]">{item.recognized || '없음'}</div>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <span className="rounded-full bg-white px-3 py-1 text-center text-xs font-bold uppercase text-slate-500">
+                    <span className="bg-white border border-[var(--border)] px-3 py-1 text-center text-xs font-bold uppercase text-[var(--text-light)]">
                       {item.type}
                     </span>
                     {item.type !== 'correct' ? (
@@ -145,7 +143,7 @@ export default function ResultAnalysis() {
                               | 'selfCorrection',
                           )
                         }
-                        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold"
+                        className="border border-[var(--border)] bg-white px-3 py-2 text-xs font-bold"
                       >
                         {reclassifyOptions.map((option) => (
                           <option key={option.value} value={option.value}>
@@ -161,13 +159,13 @@ export default function ResultAnalysis() {
           </div>
 
           <div className="mt-6 flex items-center justify-between">
-            <Link to="/assess" className="text-sm font-semibold text-slate-500">
+            <Link to="/assess" className="text-sm font-bold text-[var(--text-light)] hover:text-[var(--primary)]">
               자기평가 수정
             </Link>
             <button
               type="button"
               onClick={handleComplete}
-              className="rounded-full bg-slate-900 px-6 py-3 font-bold text-white"
+              className="bg-[var(--text-main)] px-6 py-3 font-bold text-white transition hover:opacity-90"
             >
               완료하고 보상 받기
             </button>

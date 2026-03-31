@@ -4,9 +4,9 @@ import { passages } from '../../data/passages'
 import StudentLayout from '../components/StudentLayout'
 
 const difficultyStyle = {
-  easy: 'bg-green-100 text-green-700 border-green-300',
-  medium: 'bg-yellow-100 text-yellow-700 border-yellow-300',
-  hard: 'bg-red-100 text-red-700 border-red-300',
+  easy: 'bg-emerald-50 text-emerald-700 border-emerald-400',
+  medium: 'bg-amber-50 text-amber-700 border-amber-400',
+  hard: 'bg-red-50 text-red-700 border-red-400',
 }
 
 const difficultyLabel = { easy: '쉬움', medium: '보통', hard: '어려움' }
@@ -17,10 +17,10 @@ export default function PassageSelect() {
 
   return (
     <StudentLayout
-      title="어떤 이야기를 읽어볼까요? 📖"
+      title="어떤 이야기를 읽어볼까요?"
       subtitle="마음에 드는 지문을 골라보세요. 난이도를 확인하고 도전해봐요!"
     >
-      <div className="grid gap-5 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3">
         {passages.map((passage) => {
           const selected = draft.passageId === passage.id
           return (
@@ -28,22 +28,22 @@ export default function PassageSelect() {
               key={passage.id}
               type="button"
               onClick={() => setPassage(passage.id)}
-              className={`rounded-3xl border-3 p-5 text-left transition hover:scale-[1.02] hover:shadow-lg ${
+              className={`border-2 p-5 text-left transition hover:shadow-md ${
                 selected
-                  ? 'border-orange-400 bg-orange-50 shadow-lg shadow-orange-100 ring-2 ring-orange-200'
-                  : 'border-transparent bg-white shadow-md hover:border-orange-200'
+                  ? 'border-[var(--primary)] bg-[var(--primary-light)] shadow-md'
+                  : 'border-[var(--border)] bg-white hover:border-[var(--primary)]'
               }`}
             >
-              <div className="mb-3 text-5xl">{passage.thumbnailEmoji}</div>
-              <h3 className="text-xl font-extrabold text-amber-900">{passage.title}</h3>
-              <span className={`mt-2 inline-block rounded-full border px-3 py-1 text-xs font-bold ${difficultyStyle[passage.difficulty]}`}>
+              <div className="mb-3 text-4xl">{passage.thumbnailEmoji}</div>
+              <h3 className="text-lg font-extrabold text-[var(--text-main)]">{passage.title}</h3>
+              <span className={`mt-2 inline-block border-l-4 px-2 py-0.5 text-xs font-bold ${difficultyStyle[passage.difficulty]}`}>
                 {difficultyLabel[passage.difficulty]}
               </span>
-              <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-amber-700/70">
+              <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-[var(--text-sub)]">
                 {passage.text}
               </p>
               {selected && (
-                <div className="mt-3 text-sm font-bold text-orange-500">✅ 선택됨</div>
+                <div className="mt-3 text-sm font-bold text-[var(--primary)]">✓ 선택됨</div>
               )}
             </button>
           )
@@ -55,7 +55,7 @@ export default function PassageSelect() {
           type="button"
           disabled={!draft.passageId}
           onClick={() => navigate('/goal')}
-          className="rounded-full bg-orange-500 px-8 py-3.5 text-base font-extrabold text-white shadow-lg shadow-orange-200 transition hover:scale-105 hover:bg-orange-600 disabled:opacity-40 disabled:hover:scale-100"
+          className="bg-[var(--primary)] px-8 py-3.5 text-base font-extrabold text-white shadow-md transition hover:bg-[var(--primary-dark)] disabled:opacity-40"
         >
           목표 설정하러 가기 →
         </button>
