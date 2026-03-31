@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "push": "git add . && git commit -m \"auto: update code\" && git push",
+    "deploy:cf": "npm run build && npx wrangler pages deploy dist --project-name=reading-flow",
+    "deploy:all": "npm run push && npm run deploy:cf"
   },
   "dependencies": {
     "chart.js": "^4.5.1",
