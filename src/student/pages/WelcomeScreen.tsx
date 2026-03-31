@@ -25,6 +25,8 @@ export default function WelcomeScreen() {
     }
   }
 
+  const earnedIds = new Set(player.badges.map((b) => b.id))
+
   const sessionsProgress = nextLevel
     ? Math.min(100, (player.totalSessions / nextLevel.requiredSessions) * 100)
     : 100
@@ -141,28 +143,31 @@ export default function WelcomeScreen() {
         <div className="mb-5 w-full max-w-md border border-[var(--border)] bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-extrabold text-[var(--text-main)]">🏅 뱃지 컬렉션</h2>
-            <span className="text-xs font-bold text-[var(--text-light)]">{player.badges.length}/{badgeDefs.length}</span>
+            <span className="text-xs font-bold text-[var(--text-light)]">{earnedIds.size}/{badgeDefs.length} 획득</span>
           </div>
-          {player.badges.length === 0 ? (
-            <p className="text-center text-sm text-[var(--text-light)] py-2">아직 획득한 뱃지가 없어요. 읽기를 시작해보세요!</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {player.badges.map((b) => {
-                const def = badgeDefs.find((d) => d.id === b.id)
-                if (!def) return null
+          <div className="max-h-60 overflow-y-auto pr-1 scrollbar-none">
+            <div className="grid grid-cols-4 gap-2">
+              {badgeDefs.map((def) => {
+                const earned = earnedIds.has(def.id)
                 return (
                   <div
-                    key={b.id}
-                    className="flex items-center gap-1.5 border border-[var(--border)] bg-[var(--bg-main)] px-3 py-1.5 text-sm font-bold text-[var(--text-main)]"
+                    key={def.id}
+                    className={`flex flex-col items-center gap-1 border p-3 text-center transition ${
+                      earned
+                        ? 'border-[var(--primary)] bg-[var(--primary-light)]'
+                        : 'border-[var(--border)] bg-[var(--bg-main)] opacity-40 grayscale'
+                    }`}
                     title={def.description}
                   >
-                    <span>{def.icon}</span>
-                    <span>{def.name}</span>
+                    <span className="text-2xl">{def.icon}</span>
+                    <span className={`text-[10px] font-bold leading-tight ${earned ? 'text-[var(--text-main)]' : 'text-[var(--text-light)]'}`}>
+                      {def.name}
+                    </span>
                   </div>
                 )
               })}
             </div>
-          )}
+          </div>
         </div>
 
         {/* 오늘의 흐름 */}
