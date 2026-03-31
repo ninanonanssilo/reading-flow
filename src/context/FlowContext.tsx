@@ -12,6 +12,8 @@ import {
 import { badges as badgeDefs, getLevel, getStarsForAccuracy } from '../data/constants'
 import { reclassifyMapping } from '../utils/basa'
 import { generateScaffold } from '../utils/scaffold'
+import { saveSession } from '../lib/api'
+import { getAudioBlob } from '../utils/audioStorage'
 
 interface FlowContextValue {
   draft: FlowDraft
@@ -25,7 +27,7 @@ interface FlowContextValue {
   setAudioId: (id: string) => void
   applyReclassify: (mappingIndex: number, type: 'substitution' | 'omission' | 'addition' | 'repetition' | 'selfCorrection') => void
   setName: (name: string) => void
-  commitSession: () => { stars: number; nextLevel: number; newBadges: Badge[] } | null
+  commitSession: () => Promise<{ stars: number; nextLevel: number; newBadges: Badge[] } | null>
   resetDraft: () => void
 }
 
@@ -100,7 +102,7 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
     }),
     [],
   )
-  const commitSession = useCallback(() => {
+  const commitSession = useCallback(async () => {
     const d = draftRef.current
     const p = playerRef.current
     if (!d.passageId || !d.goalType || !d.analysis || !d.selfAssessment) {
@@ -126,6 +128,20 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
     }
 
     const nextPlayer = appendSession(p, session, stars, nextLevel)
+
+    // Supabase DB 저장 (비동기, 실패해도 로컬은 이미 저장됨)
+    if (p._supabaseId) {
+      const audioBlob = d.audioId ? await getAudioBlob(d.audioId).catch(() => null) : null
+      saveSession({
+        studentId: p._supabaseId,
+        session,
+        earnedStars: stars,
+        newLevel: nextLevel,
+        audioBlob: audioBlob ?? undefined,
+      }).catch((err) => {
+        console.error('[FlowContext] DB 저장 실패, 로컬에는 저장됨:', err)
+      })
+    }
 
     // 새로 획득한 뱃지 계산
     const earnedIds = new Set(nextPlayer.badges.map((b) => b.id))

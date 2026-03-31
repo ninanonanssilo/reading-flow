@@ -58,8 +58,8 @@ export default function ResultAnalysis() {
   const scaffold = generateScaffold(analysis, draft.goalType ?? 'accuracy', selfAssessment.selfRating, player.sessions)
   const metacognition = getMetacognitionFeedback(gap, selfAssessment.selfRating, aiRating)
 
-  const handleComplete = () => {
-    const result = commitSession()
+  const handleComplete = async () => {
+    const result = await commitSession()
     navigate('/complete', { state: result })
   }
 

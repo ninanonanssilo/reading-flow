@@ -99,6 +99,7 @@ export interface PlayerData {
   sessions: SessionData[]
   badges: Badge[]
   currentHHAIR?: RegulationLevel
+  _supabaseId?: string
 }
 
 export interface BadgeDef {

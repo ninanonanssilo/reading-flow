@@ -16,6 +16,7 @@ const SelfAssessment = lazy(() => import('./student/pages/SelfAssessment'))
 const ResultAnalysis = lazy(() => import('./student/pages/ResultAnalysis'))
 const Completion = lazy(() => import('./student/pages/Completion'))
 const Dashboard = lazy(() => import('./teacher/pages/Dashboard'))
+const PinLogin = lazy(() => import('./student/pages/PinLogin'))
 
 function Loading() {
   return (
@@ -53,6 +54,7 @@ export default function App() {
               <Route path="/welcome" element={<RoleSelect />} />
               <Route path="/login/:role" element={<Login />} />
               <Route path="/register/:role" element={<Register />} />
+              <Route path="/pin" element={<PinLogin />} />
 
               {/* 학생 전용 */}
               <Route path="/nickname" element={<StudentRoute><NicknameSetup /></StudentRoute>} />
