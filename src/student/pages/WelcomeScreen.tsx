@@ -1,10 +1,36 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, Navigate } from 'react-router-dom'
 import { useFlow } from '../../context/FlowContext'
-import { levels } from '../../data/constants'
+import { badges as badgeDefs, levels } from '../../data/constants'
 
 export default function WelcomeScreen() {
-  const { player } = useFlow()
+  const { player, setName } = useFlow()
   const currentLevel = levels.find((l) => l.level === player.level) ?? levels[0]
+  const nextLevel = levels.find((l) => l.level === player.level + 1)
+  const [editingName, setEditingName] = useState(false)
+  const [nameInput, setNameInput] = useState(player.name)
+
+  // 닉네임 미설정 시 설정 페이지로
+  if (!player.name) {
+    return <Navigate to="/nickname" replace />
+  }
+
+  const handleNameSave = () => {
+    const name = nameInput.trim()
+    if (name) {
+      setName(name)
+      setEditingName(false)
+    }
+  }
+
+  // 다음 레벨 진행도
+  const sessionsProgress = nextLevel
+    ? Math.min(100, (player.totalSessions / nextLevel.requiredSessions) * 100)
+    : 100
+  const starsProgress = nextLevel
+    ? Math.min(100, (player.totalStars / nextLevel.requiredStars) * 100)
+    : 100
+  const overallProgress = Math.min(sessionsProgress, starsProgress)
 
   return (
     <main className="min-h-screen bg-[#FFF9F0]">
@@ -28,14 +54,39 @@ export default function WelcomeScreen() {
         </div>
 
         {/* 플레이어 정보 카드 */}
-        <div className="mb-8 w-full max-w-md rounded-3xl bg-white p-6 shadow-lg">
+        <div className="mb-6 w-full max-w-md rounded-3xl bg-white p-6 shadow-lg">
           <div className="flex items-center gap-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-100 text-3xl">
               {currentLevel.icon}
             </div>
             <div className="flex-1">
               <p className="text-sm font-bold text-amber-600">Lv.{currentLevel.level} {currentLevel.name}</p>
-              <p className="text-xl font-extrabold text-amber-900">{player.name}</p>
+              {editingName ? (
+                <div className="mt-1 flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleNameSave()}
+                    maxLength={12}
+                    className="w-full rounded-xl border-2 border-orange-300 bg-orange-50 px-3 py-1.5 text-base font-bold text-amber-900 outline-none"
+                    autoFocus
+                  />
+                  <button type="button" onClick={handleNameSave} className="text-lg">✅</button>
+                  <button type="button" onClick={() => { setEditingName(false); setNameInput(player.name) }} className="text-lg">❌</button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <p className="text-xl font-extrabold text-amber-900">{player.name}</p>
+                  <button
+                    type="button"
+                    onClick={() => setEditingName(true)}
+                    className="text-sm text-amber-500 hover:text-amber-700"
+                  >
+                    ✏️
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           <div className="mt-4 grid grid-cols-3 gap-3">
@@ -52,6 +103,51 @@ export default function WelcomeScreen() {
               <div className="text-xl font-extrabold text-green-700">{currentLevel.level}</div>
             </div>
           </div>
+
+          {/* 다음 레벨 프로그레스 */}
+          {nextLevel && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-xs font-bold text-amber-600">
+                <span>다음: Lv.{nextLevel.level} {nextLevel.name} {nextLevel.icon}</span>
+                <span>{Math.round(overallProgress)}%</span>
+              </div>
+              <div className="mt-1.5 h-3 overflow-hidden rounded-full bg-gray-100">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-orange-400 to-yellow-400 transition-all duration-500"
+                  style={{ width: `${overallProgress}%` }}
+                />
+              </div>
+              <p className="mt-1 text-[11px] text-amber-500">
+                세션 {player.totalSessions}/{nextLevel.requiredSessions} · 별 {player.totalStars}/{nextLevel.requiredStars}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* 뱃지 컬렉션 */}
+        <div className="mb-6 w-full max-w-md rounded-3xl bg-white p-5 shadow-lg">
+          <h2 className="mb-3 text-lg font-extrabold text-amber-900">🏅 뱃지 컬렉션</h2>
+          {player.badges.length === 0 ? (
+            <p className="text-center text-sm text-amber-500/70 py-2">아직 획득한 뱃지가 없어요. 읽기를 시작해보세요!</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {player.badges.map((b) => {
+                const def = badgeDefs.find((d) => d.id === b.id)
+                if (!def) return null
+                return (
+                  <div
+                    key={b.id}
+                    className="flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-sm font-bold text-amber-800"
+                    title={def.description}
+                  >
+                    <span>{def.icon}</span>
+                    <span>{def.name}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+          <p className="mt-2 text-right text-xs text-amber-400">{player.badges.length}/{badgeDefs.length} 획득</p>
         </div>
 
         {/* 오늘의 흐름 */}

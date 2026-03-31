@@ -62,8 +62,8 @@ export default function ResultAnalysis() {
         : '지금은 쉬운 지문으로 안정감을 먼저 만드는 편이 좋습니다. 천천히 끊어 읽어도 괜찮습니다.'
 
   const handleComplete = () => {
-    commitSession()
-    navigate('/complete')
+    const result = commitSession()
+    navigate('/complete', { state: result })
   }
 
   return (

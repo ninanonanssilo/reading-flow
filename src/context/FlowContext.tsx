@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import type { FlowDraft, GoalType, PlayerData, ReadingAnalysis, SelfAssessmentData } from '../types'
+import type { Badge, FlowDraft, GoalType, PlayerData, ReadingAnalysis, SelfAssessmentData } from '../types'
 import {
   appendSession,
   clearDraft,
@@ -9,7 +9,7 @@ import {
   writeDraft,
   writePlayerData,
 } from '../utils/storage'
-import { getLevel, getStarsForAccuracy } from '../data/constants'
+import { badges as badgeDefs, getLevel, getStarsForAccuracy } from '../data/constants'
 import { reclassifyMapping } from '../utils/basa'
 
 interface FlowContextValue {
@@ -22,7 +22,8 @@ interface FlowContextValue {
   setAnalysis: (analysis: ReadingAnalysis) => void
   setSelfAssessment: (assessment: SelfAssessmentData) => void
   applyReclassify: (mappingIndex: number, type: 'substitution' | 'omission' | 'addition' | 'repetition' | 'selfCorrection') => void
-  commitSession: () => { stars: number; nextLevel: number } | null
+  setName: (name: string) => void
+  commitSession: () => { stars: number; nextLevel: number; newBadges: Badge[] } | null
   resetDraft: () => void
 }
 
@@ -85,6 +86,14 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
       }),
     [],
   )
+  const setName = useCallback(
+    (name: string) => setPlayer((current) => {
+      const next = { ...current, name }
+      writePlayerData(next)
+      return next
+    }),
+    [],
+  )
   const commitSession = useCallback(() => {
     const d = draftRef.current
     const p = playerRef.current
@@ -94,25 +103,34 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
 
     const stars = getStarsForAccuracy(d.analysis.accuracy)
     const nextLevel = getLevel(p.totalSessions + 1, p.totalStars + stars)
+    const session = {
+      passageId: d.passageId,
+      goalType: d.goalType,
+      confidence: d.confidence,
+      analysis: d.analysis,
+      selfAssessment: d.selfAssessment,
+      timestamp: Date.now(),
+    }
 
-    const nextPlayer = appendSession(
-      p,
-      {
-        passageId: d.passageId,
-        goalType: d.goalType,
-        confidence: d.confidence,
-        analysis: d.analysis,
-        selfAssessment: d.selfAssessment,
-        timestamp: Date.now(),
-      },
-      stars,
-      nextLevel,
-    )
+    const nextPlayer = appendSession(p, session, stars, nextLevel)
+
+    // 새로 획득한 뱃지 계산
+    const earnedIds = new Set(nextPlayer.badges.map((b) => b.id))
+    const newBadges: Badge[] = []
+    for (const def of badgeDefs) {
+      if (!earnedIds.has(def.id) && def.check(nextPlayer, session)) {
+        newBadges.push({ id: def.id, earnedAt: Date.now() })
+      }
+    }
+    if (newBadges.length > 0) {
+      nextPlayer.badges = [...nextPlayer.badges, ...newBadges]
+      writePlayerData(nextPlayer)
+    }
 
     setPlayer(nextPlayer)
     setDraft(defaultDraft)
     clearDraft()
-    return { stars, nextLevel }
+    return { stars, nextLevel, newBadges }
   }, [])
   const resetDraft = useCallback(() => {
     setDraft(defaultDraft)
@@ -130,10 +148,11 @@ export function FlowProvider({ children }: { children: React.ReactNode }) {
       setAnalysis,
       setSelfAssessment,
       applyReclassify,
+      setName,
       commitSession,
       resetDraft,
     }),
-    [draft, player, setPassage, setGoal, setTranscript, markReadingWindow, setAnalysis, setSelfAssessment, applyReclassify, commitSession, resetDraft],
+    [draft, player, setPassage, setGoal, setTranscript, markReadingWindow, setAnalysis, setSelfAssessment, applyReclassify, setName, commitSession, resetDraft],
   )
 
   return <FlowContext.Provider value={value}>{children}</FlowContext.Provider>

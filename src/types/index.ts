@@ -80,12 +80,26 @@ export interface SessionData {
   timestamp: number
 }
 
+export interface Badge {
+  id: string
+  earnedAt: number
+}
+
 export interface PlayerData {
   name: string
   totalSessions: number
   totalStars: number
   level: number
   sessions: SessionData[]
+  badges: Badge[]
+}
+
+export interface BadgeDef {
+  id: string
+  name: string
+  icon: string
+  description: string
+  check: (player: PlayerData, latestSession?: SessionData) => boolean
 }
 
 export interface LevelDef {

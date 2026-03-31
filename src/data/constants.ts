@@ -1,4 +1,4 @@
-import type { GoalOption, LevelDef } from '../types'
+import type { BadgeDef, GoalOption, LevelDef } from '../types'
 
 export const goalOptions: GoalOption[] = [
   {
@@ -45,3 +45,76 @@ export function getLevel(totalSessions: number, totalStars: number) {
     .find((item) => totalSessions >= item.requiredSessions && totalStars >= item.requiredStars)
     ?.level ?? 1
 }
+
+export const badges: BadgeDef[] = [
+  {
+    id: 'first-read',
+    name: '첫 발걸음',
+    icon: '👣',
+    description: '첫 번째 읽기를 완료했어요!',
+    check: (p) => p.totalSessions >= 1,
+  },
+  {
+    id: 'accuracy-90',
+    name: '또박또박 읽기왕',
+    icon: '🎯',
+    description: '정확도 90% 이상 달성!',
+    check: (_p, s) => (s?.analysis.accuracy ?? 0) >= 90,
+  },
+  {
+    id: 'perfect-read',
+    name: '완벽한 읽기',
+    icon: '💎',
+    description: '정확도 100%를 달성했어요!',
+    check: (_p, s) => (s?.analysis.accuracy ?? 0) >= 100,
+  },
+  {
+    id: 'speed-star',
+    name: '빠른 별똥별',
+    icon: '💨',
+    description: 'CWPM 80 이상 달성!',
+    check: (_p, s) => (s?.analysis.cwpm ?? 0) >= 80,
+  },
+  {
+    id: 'sessions-5',
+    name: '꾸준한 탐험가',
+    icon: '🏕️',
+    description: '읽기 5회 달성!',
+    check: (p) => p.totalSessions >= 5,
+  },
+  {
+    id: 'sessions-10',
+    name: '읽기 달인',
+    icon: '🏆',
+    description: '읽기 10회 달성!',
+    check: (p) => p.totalSessions >= 10,
+  },
+  {
+    id: 'stars-10',
+    name: '별 수집가',
+    icon: '🌟',
+    description: '별 10개 모으기!',
+    check: (p) => p.totalStars >= 10,
+  },
+  {
+    id: 'stars-30',
+    name: '은하수 여행자',
+    icon: '🌌',
+    description: '별 30개 모으기!',
+    check: (p) => p.totalStars >= 30,
+  },
+  {
+    id: 'three-stars',
+    name: '만점 스타',
+    icon: '⭐',
+    description: '별 3개를 획득했어요!',
+    check: (_p, s) => (s?.analysis.accuracy ?? 0) >= 85,
+  },
+  {
+    id: 'level-3',
+    name: '토성 도착',
+    icon: '🪐',
+    description: '레벨 3에 도달했어요!',
+    check: (p) => p.level >= 3,
+  },
+]

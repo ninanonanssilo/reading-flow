@@ -4,11 +4,12 @@ const PLAYER_KEY = 'reading-flow-player'
 const DRAFT_KEY = 'reading-flow-draft'
 
 export const defaultPlayerData: PlayerData = {
-  name: '우주 탐험가',
+  name: '',
   totalSessions: 0,
   totalStars: 0,
   level: 1,
   sessions: [],
+  badges: [],
 }
 
 export const defaultDraft: FlowDraft = {

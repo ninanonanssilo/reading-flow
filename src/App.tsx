@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { FlowProvider } from './context/FlowContext'
 
+const NicknameSetup = lazy(() => import('./student/pages/NicknameSetup'))
 const WelcomeScreen = lazy(() => import('./student/pages/WelcomeScreen'))
 const PassageSelect = lazy(() => import('./student/pages/PassageSelect'))
 const GoalSetting = lazy(() => import('./student/pages/GoalSetting'))
@@ -28,6 +29,7 @@ export default function App() {
       <BrowserRouter>
         <Suspense fallback={<Loading />}>
           <Routes>
+            <Route path="/nickname" element={<NicknameSetup />} />
             <Route path="/" element={<WelcomeScreen />} />
             <Route path="/passage" element={<PassageSelect />} />
             <Route path="/goal" element={<GoalSetting />} />
