@@ -38,16 +38,16 @@ export default function WelcomeScreen() {
       {/* 헤더 */}
       <header className="mx-auto flex max-w-4xl items-center justify-between px-6 pt-5">
         <Link
-          to="/teacher"
-          className="border border-[var(--border)] bg-white px-4 py-2 text-sm font-bold text-[var(--text-sub)] shadow-sm transition hover:shadow-md"
+          to="/"
+          className="flex items-center gap-2 border border-[var(--border)] bg-white px-5 py-2 text-base font-extrabold text-[var(--primary)] shadow-sm"
         >
-          👩‍🏫 교사용
+          <span className="text-lg">📚</span> 리딩플로우
         </Link>
         <div className="flex items-center gap-2">
           {user && <span className="text-sm font-bold text-[var(--text-sub)]">{user.username}</span>}
           <button
             type="button"
-            onClick={() => { logout(); navigate('/login') }}
+            onClick={() => { logout(); navigate('/welcome') }}
             className="border border-[var(--border)] bg-white px-4 py-2 text-sm font-bold text-[var(--text-light)] shadow-sm transition hover:text-red-500 hover:shadow-md"
           >
             로그아웃

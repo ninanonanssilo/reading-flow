@@ -147,10 +147,13 @@ export interface FlowDraft {
 
 export type ScaffoldLevel = 'high' | 'medium' | 'low'
 
+export type UserRole = 'student' | 'teacher'
+
 export interface UserAccount {
   id: string
   username: string
   password: string
+  role: UserRole
   privacyConsent: boolean
   privacyConsentAt: number
   createdAt: number

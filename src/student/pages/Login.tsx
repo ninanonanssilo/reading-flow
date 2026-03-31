@@ -1,35 +1,63 @@
 import { useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import type { UserRole } from '../../types'
+
+const roleConfig = {
+  student: {
+    title: '학생 로그인',
+    subtitle: '읽기 우주탐험대에 돌아오셨군요!',
+    icon: '🧑‍🎓',
+    color: 'var(--primary)',
+    colorDark: 'var(--primary-dark)',
+    home: '/',
+    registerPath: '/register/student',
+    otherRole: { path: '/login/teacher', label: '교사로 로그인' },
+  },
+  teacher: {
+    title: '교사 로그인',
+    subtitle: '학생들의 읽기 현황을 확인하세요.',
+    icon: '👩‍🏫',
+    color: 'var(--secondary)',
+    colorDark: '#00a88c',
+    home: '/teacher',
+    registerPath: '/register/teacher',
+    otherRole: { path: '/login/student', label: '학생으로 로그인' },
+  },
+}
 
 export default function Login() {
+  const { role: roleParam } = useParams<{ role: string }>()
+  const role = (roleParam === 'teacher' ? 'teacher' : 'student') as UserRole
+  const config = roleConfig[role]
+
   const navigate = useNavigate()
-  const { isLoggedIn, login } = useAuth()
+  const { user, login } = useAuth()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
 
-  if (isLoggedIn) {
-    return <Navigate to="/" replace />
+  if (user && user.role === role) {
+    return <Navigate to={config.home} replace />
   }
 
   const handleSubmit = () => {
     setError(null)
-    const err = login(username, password)
+    const err = login(username, password, role)
     if (err) {
       setError(err)
       return
     }
-    navigate('/')
+    navigate(config.home)
   }
 
   return (
     <main className="min-h-screen bg-[var(--bg-main)]">
       <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 py-10">
         <div className="mb-8 text-center">
-          <div className="mb-3 text-5xl">📚</div>
-          <h1 className="text-2xl font-extrabold text-[var(--text-main)]">로그인</h1>
-          <p className="mt-2 text-sm text-[var(--text-sub)]">읽기 우주탐험대에 돌아오셨군요!</p>
+          <div className="mb-3 text-5xl">{config.icon}</div>
+          <h1 className="text-2xl font-extrabold text-[var(--text-main)]">{config.title}</h1>
+          <p className="mt-2 text-sm text-[var(--text-sub)]">{config.subtitle}</p>
         </div>
 
         <div className="w-full space-y-4">
@@ -67,15 +95,26 @@ export default function Login() {
           <button
             type="button"
             onClick={handleSubmit}
-            className="w-full bg-[var(--primary)] py-4 text-base font-extrabold text-white shadow-md transition hover:bg-[var(--primary-dark)]"
+            style={{ backgroundColor: config.color }}
+            className="w-full py-4 text-base font-extrabold text-white shadow-md transition hover:opacity-90"
           >
             로그인
           </button>
 
-          <p className="text-center text-sm text-[var(--text-light)]">
-            계정이 없나요?{' '}
-            <Link to="/register" className="font-bold text-[var(--primary)] hover:underline">회원가입</Link>
-          </p>
+          <div className="flex items-center justify-between text-sm">
+            <Link to={config.registerPath} className="font-bold text-[var(--primary)] hover:underline">
+              회원가입
+            </Link>
+            <Link to={config.otherRole.path} className="font-bold text-[var(--text-light)] hover:text-[var(--text-sub)]">
+              {config.otherRole.label}
+            </Link>
+          </div>
+
+          <div className="text-center">
+            <Link to="/welcome" className="text-xs font-bold text-[var(--text-light)] hover:text-[var(--text-sub)]">
+              ← 역할 선택으로 돌아가기
+            </Link>
+          </div>
         </div>
       </div>
     </main>

@@ -28,7 +28,7 @@ export default function StudentLayout({
 
   const handleLogout = () => {
     logout()
-    navigate('/login')
+    navigate('/welcome')
   }
 
   return (
@@ -36,14 +36,8 @@ export default function StudentLayout({
       <div className="mx-auto max-w-5xl px-4 py-5 md:px-8">
         {/* 헤더 */}
         <header className="mb-5 flex items-center justify-between">
-          {/* 좌측: 교사 대시보드 + 홈 */}
+          {/* 좌측: 홈 */}
           <div className="flex items-center gap-2">
-            <Link
-              to="/teacher"
-              className="border border-[var(--border)] bg-white px-4 py-2 text-sm font-bold text-[var(--text-sub)] shadow-sm transition hover:shadow-md"
-            >
-              👩‍🏫 교사용
-            </Link>
             <Link
               to="/"
               className="flex items-center gap-2 border border-[var(--border)] bg-white px-5 py-2 text-base font-extrabold text-[var(--primary)] shadow-sm transition hover:shadow-md"

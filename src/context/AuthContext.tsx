@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import type { UserAccount } from '../types'
+import type { UserAccount, UserRole } from '../types'
 
 const USERS_KEY = 'reading-flow-users'
 const SESSION_KEY = 'reading-flow-session'
@@ -7,8 +7,8 @@ const SESSION_KEY = 'reading-flow-session'
 interface AuthContextValue {
   user: UserAccount | null
   isLoggedIn: boolean
-  login: (username: string, password: string) => string | null
-  register: (username: string, password: string, privacyConsent: boolean) => string | null
+  login: (username: string, password: string, role: UserRole) => string | null
+  register: (username: string, password: string, role: UserRole, privacyConsent: boolean) => string | null
   logout: () => void
 }
 
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     writeSession(user?.id ?? null)
   }, [user])
 
-  const register = useCallback((username: string, password: string, privacyConsent: boolean): string | null => {
+  const register = useCallback((username: string, password: string, role: UserRole, privacyConsent: boolean): string | null => {
     if (!username.trim()) return '아이디를 입력해주세요.'
     if (username.trim().length < 2) return '아이디는 2자 이상이어야 합니다.'
     if (!password) return '비밀번호를 입력해주세요.'
@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!privacyConsent) return '개인정보 수집·이용에 동의해주세요.'
 
     const users = readUsers()
-    if (users.find((u) => u.username === username.trim())) {
+    if (users.find((u) => u.username === username.trim() && u.role === role)) {
       return '이미 사용 중인 아이디입니다.'
     }
 
@@ -67,6 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id: crypto.randomUUID(),
       username: username.trim(),
       password,
+      role,
       privacyConsent: true,
       privacyConsentAt: Date.now(),
       createdAt: Date.now(),
@@ -77,12 +78,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return null
   }, [])
 
-  const login = useCallback((username: string, password: string): string | null => {
+  const login = useCallback((username: string, password: string, role: UserRole): string | null => {
     if (!username.trim()) return '아이디를 입력해주세요.'
     if (!password) return '비밀번호를 입력해주세요.'
 
     const users = readUsers()
-    const found = users.find((u) => u.username === username.trim() && u.password === password)
+    const found = users.find((u) => u.username === username.trim() && u.password === password && u.role === role)
     if (!found) return '아이디 또는 비밀번호가 일치하지 않습니다.'
 
     setUser(found)

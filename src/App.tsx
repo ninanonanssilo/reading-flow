@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext'
 import { FlowProvider } from './context/FlowContext'
 import { useAuth } from './context/AuthContext'
 
+const RoleSelect = lazy(() => import('./student/pages/RoleSelect'))
 const Login = lazy(() => import('./student/pages/Login'))
 const Register = lazy(() => import('./student/pages/Register'))
 const NicknameSetup = lazy(() => import('./student/pages/NicknameSetup'))
@@ -27,9 +28,17 @@ function Loading() {
   )
 }
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isLoggedIn } = useAuth()
-  if (!isLoggedIn) return <Navigate to="/login" replace />
+function StudentRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth()
+  if (!user) return <Navigate to="/welcome" replace />
+  if (user.role !== 'student') return <Navigate to="/teacher" replace />
+  return <>{children}</>
+}
+
+function TeacherRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth()
+  if (!user) return <Navigate to="/welcome" replace />
+  if (user.role !== 'teacher') return <Navigate to="/" replace />
   return <>{children}</>
 }
 
@@ -40,18 +49,25 @@ export default function App() {
         <BrowserRouter>
           <Suspense fallback={<Loading />}>
             <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/nickname" element={<ProtectedRoute><NicknameSetup /></ProtectedRoute>} />
-              <Route path="/" element={<ProtectedRoute><WelcomeScreen /></ProtectedRoute>} />
-              <Route path="/passage" element={<ProtectedRoute><PassageSelect /></ProtectedRoute>} />
-              <Route path="/goal" element={<ProtectedRoute><GoalSetting /></ProtectedRoute>} />
-              <Route path="/reading" element={<ProtectedRoute><ReadingActivity /></ProtectedRoute>} />
-              <Route path="/assess" element={<ProtectedRoute><SelfAssessment /></ProtectedRoute>} />
-              <Route path="/results" element={<ProtectedRoute><ResultAnalysis /></ProtectedRoute>} />
-              <Route path="/complete" element={<ProtectedRoute><Completion /></ProtectedRoute>} />
-              <Route path="/teacher" element={<Dashboard />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              {/* 공개 */}
+              <Route path="/welcome" element={<RoleSelect />} />
+              <Route path="/login/:role" element={<Login />} />
+              <Route path="/register/:role" element={<Register />} />
+
+              {/* 학생 전용 */}
+              <Route path="/nickname" element={<StudentRoute><NicknameSetup /></StudentRoute>} />
+              <Route path="/" element={<StudentRoute><WelcomeScreen /></StudentRoute>} />
+              <Route path="/passage" element={<StudentRoute><PassageSelect /></StudentRoute>} />
+              <Route path="/goal" element={<StudentRoute><GoalSetting /></StudentRoute>} />
+              <Route path="/reading" element={<StudentRoute><ReadingActivity /></StudentRoute>} />
+              <Route path="/assess" element={<StudentRoute><SelfAssessment /></StudentRoute>} />
+              <Route path="/results" element={<StudentRoute><ResultAnalysis /></StudentRoute>} />
+              <Route path="/complete" element={<StudentRoute><Completion /></StudentRoute>} />
+
+              {/* 교사 전용 */}
+              <Route path="/teacher" element={<TeacherRoute><Dashboard /></TeacherRoute>} />
+
+              <Route path="*" element={<Navigate to="/welcome" replace />} />
             </Routes>
           </Suspense>
         </BrowserRouter>
