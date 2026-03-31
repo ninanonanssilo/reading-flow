@@ -1,0 +1,2966 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>리딩플로우 - 읽기 우주탐험대</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gradient-bg: linear-gradient(135deg, #E8F4FD 0%, #F0E6FF 100%);
+            --primary-blue: #4A7DFF;
+            --secondary-orange: #FF8C42;
+            --accent-pink: #FF6B9D;
+            --success-green: #4ECDC4;
+            --text-dark: #2D3436;
+            --text-light: #666666;
+            --white: #FFFFFF;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+            background: var(--gradient-bg);
+            color: var(--text-dark);
+        }
+
+        .container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Background Animation - Floating Clouds */
+        .bg-decoration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            filter: blur(8px);
+        }
+
+        .cloud:nth-child(1) {
+            width: 100px;
+            height: 40px;
+            top: 15%;
+            left: 10%;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .cloud:nth-child(2) {
+            width: 150px;
+            height: 50px;
+            top: 60%;
+            right: 5%;
+            animation: float 25s infinite ease-in-out reverse;
+        }
+
+        .cloud:nth-child(3) {
+            width: 80px;
+            height: 35px;
+            top: 40%;
+            left: 5%;
+            animation: float 30s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateX(0px); }
+            50% { transform: translateX(50px); }
+        }
+
+        /* Content Wrapper */
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        /* Screen Management */
+        .screen {
+            display: none;
+            width: 100%;
+            min-height: 100%;
+            animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== CHARACTER: 우주비행사 아이 (SVG) ===== */
+        .ttori-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            min-height: 180px;
+        }
+
+        .ttori {
+            position: relative;
+            width: 140px;
+            height: 160px;
+            animation: bounce 3s ease-in-out infinite;
+        }
+
+        .ttori svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+        }
+
+        .ttori.happy {
+            animation: happyJump 0.6s ease-in-out infinite;
+        }
+
+        @keyframes happyJump {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+
+        .ttori.listening {
+            animation: listenSway 2s ease-in-out infinite;
+        }
+
+        @keyframes listenSway {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-5px) rotate(-2deg); }
+            75% { transform: translateY(-5px) rotate(2deg); }
+        }
+
+        /* 눈 깜빡임 */
+        .ttori .eyes-open { display: block; }
+        .ttori .eyes-closed { display: none; }
+        .ttori.listening .eyes-open { display: none; }
+        .ttori.listening .eyes-closed { display: block; }
+
+        /* 손 흔들기 */
+        .ttori .waving-hand {
+            transform-origin: 105px 75px;
+            animation: wave 1.5s ease-in-out infinite;
+        }
+
+        @keyframes wave {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-15deg); }
+            50% { transform: rotate(10deg); }
+            75% { transform: rotate(-10deg); }
+        }
+
+        .ttori.happy .waving-hand {
+            animation: wavefast 0.4s ease-in-out infinite;
+        }
+
+        @keyframes wavefast {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(-20deg); }
+        }
+
+        /* CSS에서 사용하지 않는 기존 클래스들 호환용 */
+        .ttori-body, .ttori-eyes, .eye, .pupil, .eye-shine,
+        .ttori-beak, .cheek, .ttori-wing { display: none; }
+
+        /* Speech Bubble */
+        .speech-bubble {
+            position: relative;
+            background: white;
+            border-radius: 20px;
+            padding: 12px 16px;
+            margin-top: 15px;
+            font-size: 14px;
+            color: var(--text-dark);
+            font-weight: 500;
+            box-shadow: var(--shadow-sm);
+            max-width: 220px;
+            text-align: center;
+            animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 2px solid var(--primary-blue);
+        }
+
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 0px solid transparent;
+            border-top: 10px solid white;
+            bottom: -10px;
+            left: 20px;
+        }
+
+        .speech-bubble::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 0px solid transparent;
+            border-top: 12px solid var(--primary-blue);
+            bottom: -14px;
+            left: 18px;
+            z-index: -1;
+        }
+
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.7);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* ===== SCREEN 0: WELCOME ===== */
+        #screen0 {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            gap: 30px;
+        }
+
+        .welcome-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        .welcome-subtitle {
+            font-size: 18px;
+            color: var(--text-light);
+            margin-bottom: 20px;
+        }
+
+        /* Level Badge Styles */
+        .level-badge {
+            background: linear-gradient(135deg, rgba(255, 182, 193, 0.15) 0%, rgba(173, 216, 230, 0.15) 100%);
+            border: 2px solid rgba(74, 125, 255, 0.3);
+            border-radius: 20px;
+            padding: 16px 24px;
+            max-width: 240px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .level-icon {
+            font-size: 28px;
+            display: inline-block;
+        }
+
+        .level-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .level-progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(200, 200, 200, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .level-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FF8C42, #FF6B9D);
+            border-radius: 10px;
+            transition: width 0.6s ease-out;
+        }
+
+        .level-progress-text {
+            font-size: 12px;
+            color: var(--text-light);
+            display: block;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* ===== SCREEN 1: PASSAGE SELECTION ===== */
+        #screen1 {
+            justify-content: flex-start;
+            gap: 20px;
+        }
+
+        .screen-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-dark);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .screen-subtitle {
+            font-size: 16px;
+            color: var(--text-light);
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .passage-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .passage-card {
+            background: var(--white);
+            border-radius: 25px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 3px solid transparent;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .passage-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-blue), var(--success-green));
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+            transform-origin: left;
+        }
+
+        .passage-card.card1 {
+            border-color: #90EE90;
+        }
+
+        .passage-card.card2 {
+            border-color: var(--secondary-orange);
+        }
+
+        .passage-card.card3 {
+            border-color: var(--primary-blue);
+        }
+
+        .passage-card:active, .passage-card:focus {
+            transform: scale(0.98);
+        }
+
+        .passage-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .passage-emoji {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .passage-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .passage-meta {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        .stars {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .star {
+            font-size: 16px;
+        }
+
+
+        /* ===== SCREEN 1B: GOAL SETTING ===== */
+        #screen1b {
+            justify-content: flex-start;
+            gap: 20px;
+        }
+
+        .selected-passage-info {
+            text-align: center;
+            font-size: 16px;
+            color: var(--text-light);
+            padding: 12px;
+            background: rgba(74, 125, 255, 0.08);
+            border-radius: 12px;
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        .goal-cards {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            width: 100%;
+            margin: 25px 0;
+        }
+
+        .goal-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 3px solid transparent;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .goal-card:nth-child(1) {
+            border-color: #FFD700;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.05), rgba(255, 215, 0, 0.02));
+        }
+
+        .goal-card:nth-child(2) {
+            border-color: var(--secondary-orange);
+            background: linear-gradient(135deg, rgba(255, 140, 66, 0.05), rgba(255, 140, 66, 0.02));
+        }
+
+        .goal-card:nth-child(3) {
+            border-color: var(--accent-pink);
+            background: linear-gradient(135deg, rgba(255, 107, 157, 0.05), rgba(255, 107, 157, 0.02));
+        }
+
+        .goal-card:active {
+            transform: scale(0.96);
+        }
+
+        .goal-card.active {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .goal-emoji {
+            font-size: 40px;
+        }
+
+        .goal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .goal-desc {
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        .confidence-section {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: var(--shadow-sm);
+            margin: 25px 0;
+        }
+
+        .confidence-label {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .emoji-scale {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .emoji-face {
+            font-size: 28px;
+            min-width: 28px;
+        }
+
+        .confidence-slider {
+            flex: 1;
+            height: 10px;
+            border-radius: 5px;
+            background: linear-gradient(90deg, #FFB0C0, #FF8C42, #4A7DFF);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .confidence-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--white);
+            border: 3px solid var(--primary-blue);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .confidence-slider::-webkit-slider-thumb:active {
+            transform: scale(1.2);
+        }
+
+        .confidence-slider::-moz-range-thumb {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--white);
+            border: 3px solid var(--primary-blue);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .confidence-label-display {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        /* ===== SCREEN 2B: SELF-EVALUATION ===== */
+        #screen2b {
+            justify-content: flex-start;
+            gap: 20px;
+        }
+
+        .self-eval-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: var(--shadow-sm);
+            width: 100%;
+        }
+
+        .eval-question-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .star-rating {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .rating-star {
+            font-size: 48px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            opacity: 0.4;
+            transform: scale(0.8);
+        }
+
+        .rating-star.active {
+            opacity: 1;
+            transform: scale(1.2);
+            animation: pulse 0.3s ease;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.8); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1.2); }
+        }
+
+        .difficulty-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .cute-button {
+            background: var(--white);
+            border: 3px solid var(--primary-blue);
+            border-radius: 15px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            font-family: inherit;
+            min-height: 80px;
+            justify-content: center;
+        }
+
+        .cute-button:nth-child(2) {
+            border-color: var(--success-green);
+        }
+
+        .cute-button:nth-child(1).active {
+            background: linear-gradient(135deg, rgba(255, 107, 157, 0.1), rgba(255, 107, 157, 0.05));
+            border-color: var(--accent-pink);
+            transform: scale(1.05);
+        }
+
+        .cute-button:nth-child(2).active {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.1), rgba(78, 205, 196, 0.05));
+            border-color: var(--success-green);
+            transform: scale(1.05);
+        }
+
+        .cute-button:active {
+            transform: scale(0.95);
+        }
+
+        .button-emoji {
+            font-size: 32px;
+        }
+
+        .button-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        /* ===== METACOGNITIVE COMPARISON CARD ===== */
+        .metacognitive-card {
+            background: linear-gradient(135deg, #E8F4FD, #F0E6FF);
+            border-radius: 20px;
+            padding: 20px;
+            margin: 25px 0;
+            border-left: 5px solid var(--primary-blue);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .comparison-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 15px;
+        }
+
+        .comparison-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+
+        .comparison-item {
+            background: var(--white);
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .comparison-label {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-bottom: 5px;
+        }
+
+        .comparison-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .metacognitive-message {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-dark);
+            font-weight: 500;
+            margin-top: 15px;
+            border-left: 4px solid var(--secondary-orange);
+        }
+
+        /* ===== SCAFFOLD MESSAGE ===== */
+        .scaffold-message {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: var(--shadow-sm);
+            border-top: 5px solid var(--success-green);
+            position: relative;
+        }
+
+        .scaffold-message::before {
+            content: "🎓";
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            font-size: 32px;
+            background: var(--white);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .scaffold-text {
+            font-size: 16px;
+            color: var(--text-dark);
+            line-height: 1.5;
+            margin-left: 50px;
+            font-weight: 500;
+        }
+
+        /* ===== SESSION HISTORY ===== */
+        .session-history {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .history-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 15px;
+        }
+
+        .history-bar-container {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            height: 60px;
+        }
+
+        .history-bar {
+            flex: 1;
+            background: linear-gradient(180deg, var(--primary-blue), rgba(74, 125, 255, 0.3));
+            border-radius: 8px 8px 0 0;
+            min-height: 20px;
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .history-bar-label {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-top: 8px;
+        }
+
+        /* ===== SCREEN 2: READING ACTIVITY ===== */
+        #screen2 {
+            justify-content: space-between;
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            font-size: 28px;
+        }
+
+        .progress-step.active {
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        .progress-connector {
+            flex: 1;
+            height: 2px;
+            background: #DDD;
+            margin: 0 5px;
+        }
+
+        .reading-book {
+            background: var(--white);
+            border-radius: 25px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: var(--shadow);
+            border-left: 5px solid var(--primary-blue);
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reading-text {
+            font-size: 40px;
+            line-height: 1.8;
+            color: var(--text-dark);
+            text-align: center;
+            font-weight: 500;
+            word-break: keep-all;
+        }
+
+        .timer-display {
+            font-size: 18px;
+            color: var(--primary-blue);
+            font-weight: 700;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .mic-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .mic-button {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            border: none;
+            background: var(--primary-blue);
+            color: white;
+            font-size: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 20px rgba(74, 125, 255, 0.4);
+            position: relative;
+        }
+
+        .mic-button:hover:not(:disabled) {
+            transform: scale(1.08);
+            box-shadow: 0 12px 30px rgba(74, 125, 255, 0.5);
+        }
+
+        .mic-button:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .mic-button.recording {
+            background: var(--accent-pink);
+            animation: recordPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes recordPulse {
+            0%, 100% {
+                box-shadow: 0 8px 20px rgba(255, 107, 157, 0.4), 0 0 0 0 rgba(255, 107, 157, 0.4);
+            }
+            50% {
+                box-shadow: 0 8px 20px rgba(255, 107, 157, 0.4), 0 0 0 20px rgba(255, 107, 157, 0);
+            }
+        }
+
+        .mic-status {
+            font-size: 16px;
+            color: var(--primary-blue);
+            font-weight: 600;
+            text-align: center;
+            min-height: 24px;
+            animation: breathe 2s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .soundwave {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 3px;
+            height: 30px;
+            margin: 10px 0;
+        }
+
+        .soundwave.active {
+            display: flex;
+        }
+
+        .soundwave:not(.active) {
+            display: none;
+        }
+
+        .wave-bar {
+            width: 3px;
+            background: var(--accent-pink);
+            border-radius: 2px;
+            animation: wave 0.6s ease-in-out infinite;
+        }
+
+        .wave-bar:nth-child(1) { height: 15px; animation-delay: 0s; }
+        .wave-bar:nth-child(2) { height: 20px; animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { height: 25px; animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { height: 20px; animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { height: 15px; animation-delay: 0.4s; }
+
+        @keyframes wave {
+            0%, 100% { height: 8px; }
+            50% { height: 28px; }
+        }
+
+        /* ===== SCREEN 3: RESULTS ===== */
+        #screen3 {
+            justify-content: flex-start;
+            gap: 20px;
+        }
+
+        .result-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .stars-display {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            font-size: 50px;
+        }
+
+        .star-icon {
+            animation: starPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .star-icon:nth-child(1) { animation-delay: 0.2s; }
+        .star-icon:nth-child(2) { animation-delay: 0.4s; }
+        .star-icon:nth-child(3) { animation-delay: 0.6s; }
+
+        @keyframes starPop {
+            0% {
+                opacity: 0;
+                transform: scale(0) rotate(-180deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            border-top: 4px solid var(--primary-blue);
+        }
+
+        .stat-card.accent-orange {
+            border-top-color: var(--secondary-orange);
+        }
+
+        .stat-card.accent-green {
+            border-top-color: var(--success-green);
+        }
+
+        .stat-card.accent-pink {
+            border-top-color: var(--accent-pink);
+        }
+
+        .stat-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-light);
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 26px;
+            color: var(--text-dark);
+            font-weight: 700;
+        }
+
+        .comparison-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 18px;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .comparison-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .text-display {
+            font-size: 18px;
+            line-height: 1.8;
+            color: var(--text-dark);
+            padding: 12px;
+            background: #F8F9FF;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary-blue);
+            word-break: keep-all;
+        }
+
+        .word-diff {
+            display: inline;
+            padding: 2px 6px;
+            border-radius: 6px;
+            margin: 0 2px;
+            font-weight: 500;
+        }
+
+        .word-correct {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .word-substitution {
+            background: #FFEBEE;
+            color: #C62828;
+            text-decoration: line-through;
+        }
+
+        .word-substitution::after {
+            content: ' ➜ ' attr(data-correction);
+            color: #2E7D32;
+            text-decoration: none;
+            margin-left: 4px;
+        }
+
+        .word-omission {
+            background: #FFF3E0;
+            color: #E65100;
+            border: 2px dashed var(--secondary-orange);
+        }
+
+        .word-addition {
+            background: #E3F2FD;
+            color: var(--primary-blue);
+        }
+
+        .error-summary {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 18px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 15px;
+        }
+
+        .error-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #F0F0F0;
+            font-size: 14px;
+        }
+
+        .error-item:last-child {
+            border-bottom: none;
+        }
+
+        .error-marker {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            color: white;
+            font-weight: 700;
+            margin-right: 12px;
+            font-size: 16px;
+        }
+
+        .error-marker.substitution {
+            background: #E74C3C;
+        }
+
+        .error-marker.omission {
+            background: var(--secondary-orange);
+        }
+
+        .error-marker.addition {
+            background: var(--primary-blue);
+        }
+
+        .error-marker.repetition {
+            background: #AB47BC;
+        }
+
+        .error-marker.self-correction {
+            background: #26A69A;
+        }
+
+        .word-repetition {
+            background: rgba(171, 71, 188, 0.15);
+            border-bottom: 2px dashed #AB47BC;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .word-self-correction {
+            background: rgba(38, 166, 154, 0.15);
+            border-bottom: 2px dotted #26A69A;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .basa-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .basa-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 12px;
+            letter-spacing: 0.5px;
+        }
+        .basa-total-errors {
+            font-size: 13px;
+            color: #666;
+        }
+        .basa-total-errors strong {
+            color: #E53935;
+            font-size: 15px;
+        }
+        .error-bar-track {
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        .error-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+
+        /* 교사 재분류 팝업 */
+        .word-diff { cursor: pointer; position: relative; transition: all 0.15s; }
+        .word-diff:hover { filter: brightness(0.92); transform: scale(1.05); }
+        .word-diff.teacher-edited { outline: 2px solid #FF6B9D; outline-offset: 2px; }
+        .word-diff.teacher-edited::before {
+            content: '✏️';
+            position: absolute;
+            top: -14px;
+            right: -6px;
+            font-size: 10px;
+        }
+        .reclassify-popup {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            z-index: 1000;
+            min-width: 280px;
+            max-width: 320px;
+            animation: popIn 0.2s ease;
+        }
+        @keyframes popIn {
+            from { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        .reclassify-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 999;
+        }
+        .reclassify-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--text-dark);
+        }
+        .reclassify-word {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--primary-blue);
+            margin-bottom: 14px;
+            text-align: center;
+            padding: 8px;
+            background: #f0f4ff;
+            border-radius: 12px;
+        }
+        .reclassify-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .reclassify-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border: 2px solid #eee;
+            border-radius: 14px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+        .reclassify-btn:hover { border-color: var(--primary-blue); background: #f8faff; }
+        .reclassify-btn.active { border-color: var(--primary-blue); background: #EBF0FF; }
+        .reclassify-btn .rc-marker {
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            color: white;
+            font-size: 11px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .teacher-note {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: #FFF8E1;
+            border-radius: 10px;
+            font-size: 11px;
+            color: #996600;
+        }
+
+        .error-description {
+            flex: 1;
+            color: var(--text-dark);
+        }
+
+        .error-count {
+            color: var(--text-light);
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .perfect-score {
+            text-align: center;
+            color: var(--success-green);
+            font-weight: 700;
+            font-size: 16px;
+            padding: 15px;
+        }
+
+        /* ===== BUTTONS ===== */
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 16px 28px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            min-height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: var(--shadow-sm);
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .btn:active:not(:disabled) {
+            transform: scale(0.96);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            color: var(--white);
+            flex: 1;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #3A6FE8;
+            box-shadow: 0 12px 30px rgba(74, 125, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--secondary-orange);
+            color: var(--white);
+            flex: 1;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #FF7C2F;
+            box-shadow: 0 12px 30px rgba(255, 140, 66, 0.3);
+        }
+
+        .btn-back {
+            background: #F0F0F0;
+            color: var(--text-light);
+            align-self: flex-start;
+            margin-bottom: 15px;
+            padding: 10px 18px;
+            font-size: 14px;
+            border-radius: 15px;
+        }
+
+        .btn-back:hover {
+            background: #E0E0E0;
+        }
+
+        /* ===== SCREEN 4: COMPLETION ===== */
+        #screen4 {
+            justify-content: flex-start;
+            gap: 20px;
+        }
+
+        .completion-header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .completion-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .completion-stars {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 182, 193, 0.1) 0%, rgba(173, 216, 230, 0.1) 100%);
+            border-radius: 20px;
+        }
+
+        .stars-earned {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            font-size: 48px;
+            min-height: 60px;
+        }
+
+        .star-earned {
+            animation: starBounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .star-earned:nth-child(1) { animation-delay: 0.2s; }
+        .star-earned:nth-child(2) { animation-delay: 0.4s; }
+        .star-earned:nth-child(3) { animation-delay: 0.6s; }
+
+        @keyframes starBounce {
+            0% {
+                opacity: 0;
+                transform: scale(0) translateY(20px);
+            }
+            60% {
+                opacity: 1;
+                transform: scale(1.2) translateY(-10px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .stars-earned-text {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .level-up-section {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            margin: 15px 0;
+            box-shadow: 0 8px 20px rgba(255, 165, 0, 0.3);
+        }
+
+        .level-up-celebration {
+            font-size: 36px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            margin-bottom: 10px;
+        }
+
+        .level-up-message {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .level-up-animation {
+            font-size: 48px;
+            animation: levelUpPulse 1s ease-out infinite;
+            margin-top: 10px;
+        }
+
+        @keyframes levelUpPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .level-progress-section {
+            margin: 20px 0;
+            padding: 16px;
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .progress-bar-large {
+            width: 100%;
+            height: 12px;
+            background: rgba(200, 200, 200, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill-large {
+            height: 100%;
+            background: linear-gradient(90deg, #4A7DFF, #FF8C42);
+            border-radius: 10px;
+            transition: width 1s ease-out;
+        }
+
+        .progress-text-large {
+            font-size: 14px;
+            color: var(--text-light);
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .completion-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .stat-box {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        .stat-box:last-child {
+            border-left-color: var(--accent-pink);
+        }
+
+        .stat-box-label {
+            font-size: 12px;
+            color: var(--text-light);
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-box-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .completion-message {
+            background: linear-gradient(135deg, #E8F4FD 0%, #F0E6FF 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .lumi-says {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* ===== CONFETTI ANIMATION ===== */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #FFD700;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: confettiFall 3s ease-in forwards;
+            z-index: 100;
+        }
+
+        @keyframes confettiFall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        @media (min-width: 600px) {
+            .passage-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (min-width: 900px) {
+            .stat-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="bg-decoration">
+            <div class="cloud"></div>
+            <div class="cloud"></div>
+            <div class="cloud"></div>
+        </div>
+
+        <div class="content-wrapper">
+            <!-- SCREEN 0: WELCOME -->
+            <div id="screen0" class="screen active">
+                <div class="ttori-container">
+                    <div class="ttori" id="welcomeChar">
+                        <svg viewBox="0 0 140 170" xmlns="http://www.w3.org/2000/svg">
+                            <!-- 헬멧 외곽 -->
+                            <circle cx="70" cy="52" r="46" fill="#E8EFF5" stroke="#CBD5E0" stroke-width="2"/>
+                            <!-- 헬멧 유리 -->
+                            <circle cx="70" cy="52" r="38" fill="#D4E6F9" opacity="0.5"/>
+                            <!-- 얼굴 피부 -->
+                            <circle cx="70" cy="55" r="32" fill="#FDDCB5"/>
+                            <!-- 머리카락 -->
+                            <path d="M42 42 Q50 18 70 20 Q90 18 98 42" fill="#6B4226" stroke="none"/>
+                            <path d="M48 38 Q55 28 65 30 Q58 22 70 20 Q82 22 75 30 Q85 28 92 38" fill="#8B5E3C"/>
+                            <ellipse cx="55" cy="35" rx="8" ry="5" fill="#8B5E3C"/>
+                            <ellipse cx="85" cy="35" rx="7" ry="4" fill="#8B5E3C"/>
+                            <!-- 눈 (열림) -->
+                            <g class="eyes-open">
+                                <ellipse cx="57" cy="52" rx="8" ry="10" fill="white"/>
+                                <ellipse cx="83" cy="52" rx="8" ry="10" fill="white"/>
+                                <circle cx="59" cy="53" r="5.5" fill="#3E2723"/>
+                                <circle cx="85" cy="53" r="5.5" fill="#3E2723"/>
+                                <circle cx="57" cy="50" r="2.5" fill="white"/>
+                                <circle cx="83" cy="50" r="2.5" fill="white"/>
+                            </g>
+                            <!-- 눈 (감김 - 듣기 모드) -->
+                            <g class="eyes-closed">
+                                <path d="M49 53 Q57 58 65 53" stroke="#3E2723" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                                <path d="M75 53 Q83 58 91 53" stroke="#3E2723" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            </g>
+                            <!-- 볼 터치 -->
+                            <ellipse cx="44" cy="62" rx="7" ry="4" fill="#FFB0C0" opacity="0.6"/>
+                            <ellipse cx="96" cy="62" rx="7" ry="4" fill="#FFB0C0" opacity="0.6"/>
+                            <!-- 입 (웃는) -->
+                            <path d="M62 67 Q70 76 78 67" stroke="#E85D75" stroke-width="2" fill="#FF8A9E" stroke-linecap="round"/>
+                            <!-- 헬멧 반사광 -->
+                            <ellipse cx="92" cy="30" rx="6" ry="10" fill="white" opacity="0.5" transform="rotate(-20 92 30)"/>
+                            <circle cx="98" cy="22" r="3" fill="white" opacity="0.4"/>
+                            <!-- 우주복 몸체 -->
+                            <rect x="38" y="95" width="64" height="50" rx="18" fill="#4A7DFF"/>
+                            <rect x="42" y="95" width="56" height="50" rx="16" fill="#5B8FFF"/>
+                            <!-- 우주복 가슴 패널 -->
+                            <rect x="52" y="100" width="36" height="22" rx="8" fill="#3A6FE8"/>
+                            <!-- 별 배지 -->
+                            <polygon points="70,104 72,110 78,110 73,114 75,120 70,116 65,120 67,114 62,110 68,110" fill="#FFD700"/>
+                            <!-- 벨트 -->
+                            <rect x="42" y="125" width="56" height="7" rx="3" fill="#D4A017"/>
+                            <circle cx="70" cy="128.5" r="5" fill="#F0C040" stroke="#D4A017" stroke-width="1"/>
+                            <!-- 왼팔 -->
+                            <rect x="24" y="100" width="18" height="30" rx="9" fill="#4A7DFF"/>
+                            <circle cx="33" cy="132" r="8" fill="white"/>
+                            <!-- 오른팔 (손 흔들기) -->
+                            <g class="waving-hand">
+                                <rect x="98" y="95" width="18" height="30" rx="9" fill="#4A7DFF"/>
+                                <circle cx="107" cy="90" r="8" fill="white"/>
+                            </g>
+                            <!-- 다리 -->
+                            <rect x="45" y="140" width="20" height="22" rx="8" fill="#3A6FE8"/>
+                            <rect x="75" y="140" width="20" height="22" rx="8" fill="#3A6FE8"/>
+                            <!-- 부츠 -->
+                            <rect x="43" y="155" width="24" height="12" rx="6" fill="#E0E8F0"/>
+                            <rect x="73" y="155" width="24" height="12" rx="6" fill="#E0E8F0"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="speech-bubble">
+                    안녕! 나는 루미야!<br>루미와 함께 읽기 탐험 떠나볼까? 🚀
+                </div>
+                <div class="level-badge">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                        <span class="level-icon" id="levelIcon">🌙</span>
+                        <span class="level-name" id="levelName">Lv.1 달 기지</span>
+                    </div>
+                    <div class="level-progress-bar">
+                        <div class="level-progress-fill" id="levelProgressFill" style="width: 30%"></div>
+                    </div>
+                    <span class="level-progress-text" id="levelProgressText">다음 레벨까지 ⭐ 5개 더!</span>
+                </div>
+                <h1 class="welcome-title">읽기 우주탐험대</h1>
+                <p class="welcome-subtitle">또박또박 읽으면 별이 빛나요 ✨</p>
+                <button class="btn btn-primary" onclick="app.goToScreen1()" style="margin-top: 20px; width: auto; padding: 14px 48px; align-self: center; border-radius: 50px; font-size: 18px; font-weight: 700; flex: none; letter-spacing: 1px; box-shadow: 0 6px 20px rgba(74,125,255,0.35);">
+                    탐험 시작하기 🚀
+                </button>
+            </div>
+
+            <!-- SCREEN 1: PASSAGE SELECTION -->
+            <div id="screen1" class="screen">
+                <h2 class="screen-title">오늘은 무엇을 읽을까?</h2>
+                <p class="screen-subtitle">읽을 글을 터치해주세요</p>
+
+                <div class="passage-grid">
+                    <div class="passage-card card1" onclick="app.selectPassage(1)">
+                        <div class="passage-emoji">🌳</div>
+                        <div class="passage-text">나무 위의 새</div>
+                        <div class="passage-meta">자연 이야기</div>
+                        <div class="stars">
+                            <span class="star">⭐</span>
+                        </div>
+                    </div>
+
+                    <div class="passage-card card2" onclick="app.selectPassage(2)">
+                        <div class="passage-emoji">🍎</div>
+                        <div class="passage-text">엄마의 장보기</div>
+                        <div class="passage-meta">가족 이야기</div>
+                        <div class="stars">
+                            <span class="star">⭐</span>
+                        </div>
+                    </div>
+
+                    <div class="passage-card card3" onclick="app.selectPassage(3)">
+                        <div class="passage-emoji">🐕</div>
+                        <div class="passage-text">공원의 강아지</div>
+                        <div class="passage-meta">동물 이야기</div>
+                        <div class="stars">
+                            <span class="star">⭐</span>
+                        </div>
+                    </div>
+            </div>
+
+            <!-- SCREEN 1B: GOAL SETTING -->
+            <div id="screen1b" class="screen">
+                <h2 class="screen-title">오늘의 목표를 세워볼까? 🎯</h2>
+                <div class="selected-passage-info">
+                    <span id="screen1bPassageTitle">선택된 글</span>
+                </div>
+
+                <p class="screen-subtitle">읽을 목표를 선택해주세요</p>
+
+                <div class="goal-cards">
+                    <div class="goal-card" onclick="app.selectGoal('accuracy')">
+                        <div class="goal-emoji">⭐</div>
+                        <div class="goal-title">정확하게 읽기</div>
+                        <div class="goal-desc">천천히 정확하게</div>
+                    </div>
+
+                    <div class="goal-card" onclick="app.selectGoal('speed')">
+                        <div class="goal-emoji">🚀</div>
+                        <div class="goal-title">빠르게 읽기</div>
+                        <div class="goal-desc">빠르고 유창하게</div>
+                    </div>
+
+                    <div class="goal-card" onclick="app.selectGoal('reduction')">
+                        <div class="goal-emoji">💪</div>
+                        <div class="goal-title">틀린 부분 줄이기</div>
+                        <div class="goal-desc">더 적게 실수하기</div>
+                    </div>
+                </div>
+
+                <div class="confidence-section">
+                    <label class="confidence-label">오늘 얼마나 잘 읽을 수 있을 것 같아?</label>
+                    <div class="emoji-scale">
+                        <span class="emoji-face">😟</span>
+                        <input type="range" id="confidenceSlider" class="confidence-slider" min="1" max="4" value="2" oninput="app.updateConfidenceLabel()">
+                        <span class="emoji-face">🤩</span>
+                    </div>
+                    <div class="confidence-label-display" id="confidenceLabel">보통정도</div>
+                </div>
+
+                <button class="btn btn-primary" onclick="app.goToScreen2()" style="margin-top: 20px; width: auto; padding: 14px 48px; border-radius: 50px; font-size: 18px; font-weight: 700; letter-spacing: 1px; box-shadow: 0 6px 20px rgba(74,125,255,0.35);">
+                    읽기 시작! 📖
+                </button>
+            </div>
+
+            <!-- SCREEN 2: READING ACTIVITY -->
+            <div id="screen2" class="screen">
+                <div class="progress-steps">
+                    <div class="progress-step active">📖</div>
+                    <div class="progress-connector"></div>
+                    <div class="progress-step">🎤</div>
+                    <div class="progress-connector"></div>
+                    <div class="progress-step">⭐</div>
+                </div>
+
+                <div class="ttori-container" style="margin-bottom: 15px; min-height: 120px;">
+                    <div style="text-align: center;">
+                        <div class="ttori" id="readingChar" style="width: 90px; height: 110px; margin: 0 auto;">
+                            <svg viewBox="0 0 140 170" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="70" cy="52" r="46" fill="#E8EFF5" stroke="#CBD5E0" stroke-width="2"/>
+                                <circle cx="70" cy="52" r="38" fill="#D4E6F9" opacity="0.5"/>
+                                <circle cx="70" cy="55" r="32" fill="#FDDCB5"/>
+                                <path d="M42 42 Q50 18 70 20 Q90 18 98 42" fill="#6B4226"/>
+                                <path d="M48 38 Q55 28 65 30 Q58 22 70 20 Q82 22 75 30 Q85 28 92 38" fill="#8B5E3C"/>
+                                <ellipse cx="55" cy="35" rx="8" ry="5" fill="#8B5E3C"/>
+                                <ellipse cx="85" cy="35" rx="7" ry="4" fill="#8B5E3C"/>
+                                <g class="eyes-open">
+                                    <ellipse cx="57" cy="52" rx="8" ry="10" fill="white"/>
+                                    <ellipse cx="83" cy="52" rx="8" ry="10" fill="white"/>
+                                    <circle cx="59" cy="53" r="5.5" fill="#3E2723"/>
+                                    <circle cx="85" cy="53" r="5.5" fill="#3E2723"/>
+                                    <circle cx="57" cy="50" r="2.5" fill="white"/>
+                                    <circle cx="83" cy="50" r="2.5" fill="white"/>
+                                </g>
+                                <g class="eyes-closed">
+                                    <path d="M49 53 Q57 58 65 53" stroke="#3E2723" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                                    <path d="M75 53 Q83 58 91 53" stroke="#3E2723" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                                </g>
+                                <ellipse cx="44" cy="62" rx="7" ry="4" fill="#FFB0C0" opacity="0.6"/>
+                                <ellipse cx="96" cy="62" rx="7" ry="4" fill="#FFB0C0" opacity="0.6"/>
+                                <path d="M62 67 Q70 76 78 67" stroke="#E85D75" stroke-width="2" fill="#FF8A9E" stroke-linecap="round"/>
+                                <ellipse cx="92" cy="30" rx="6" ry="10" fill="white" opacity="0.5" transform="rotate(-20 92 30)"/>
+                                <rect x="38" y="95" width="64" height="50" rx="18" fill="#4A7DFF"/>
+                                <rect x="42" y="95" width="56" height="50" rx="16" fill="#5B8FFF"/>
+                                <rect x="52" y="100" width="36" height="22" rx="8" fill="#3A6FE8"/>
+                                <polygon points="70,104 72,110 78,110 73,114 75,120 70,116 65,120 67,114 62,110 68,110" fill="#FFD700"/>
+                                <rect x="42" y="125" width="56" height="7" rx="3" fill="#D4A017"/>
+                                <circle cx="70" cy="128.5" r="5" fill="#F0C040" stroke="#D4A017" stroke-width="1"/>
+                                <rect x="24" y="100" width="18" height="30" rx="9" fill="#4A7DFF"/>
+                                <circle cx="33" cy="132" r="8" fill="white"/>
+                                <rect x="98" y="100" width="18" height="30" rx="9" fill="#4A7DFF"/>
+                                <circle cx="107" cy="132" r="8" fill="white"/>
+                                <rect x="45" y="140" width="20" height="22" rx="8" fill="#3A6FE8"/>
+                                <rect x="75" y="140" width="20" height="22" rx="8" fill="#3A6FE8"/>
+                                <rect x="43" y="155" width="24" height="12" rx="6" fill="#E0E8F0"/>
+                                <rect x="73" y="155" width="24" height="12" rx="6" fill="#E0E8F0"/>
+                            </svg>
+                        </div>
+                        <div class="speech-bubble" style="max-width: 200px; margin: 10px auto;" id="readingBubble">
+                            천천히 읽어봐! 할 수 있어!
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reading-book">
+                    <div class="reading-text" id="readingText"></div>
+                </div>
+
+                <div class="timer-display" id="timerDisplay">⏱️ 0초</div>
+
+                <div class="mic-container">
+                    <button class="mic-button" id="micButton" onclick="app.toggleRecording()" title="읽기 시작">
+                        🎤
+                    </button>
+                    <div class="soundwave" id="soundwave">
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                    </div>
+                    <div class="mic-status" id="micStatus">읽기 시작</div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" id="doneButton" onclick="app.finishReading()" disabled>
+                        ✓ 읽기 완료
+                    </button>
+                </div>
+            </div>
+
+            <!-- SCREEN 2B: SELF-EVALUATION -->
+            <div id="screen2b" class="screen">
+                <h2 class="screen-title">내가 읽은 것을 생각해보자! 🤔</h2>
+                <p class="screen-subtitle">솔직하게 대답해주세요</p>
+
+                <div class="self-eval-card">
+                    <div class="eval-question-title">❓ 오늘 읽기를 얼마나 잘했다고 생각해?</div>
+                    <div class="star-rating" id="selfRatingStars">
+                        <span class="rating-star" onclick="app.setSelfRating(1)">⭐</span>
+                        <span class="rating-star" onclick="app.setSelfRating(2)">⭐</span>
+                        <span class="rating-star" onclick="app.setSelfRating(3)">⭐</span>
+                        <span class="rating-star" onclick="app.setSelfRating(4)">⭐</span>
+                        <span class="rating-star" onclick="app.setSelfRating(5)">⭐</span>
+                    </div>
+                </div>
+
+                <div class="self-eval-card">
+                    <div class="eval-question-title">❓ 어려운 부분이 있었어?</div>
+                    <div class="difficulty-buttons">
+                        <button class="cute-button" onclick="app.setDifficulty(true)">
+                            <span class="button-emoji">🙋</span>
+                            <span class="button-text">있었어</span>
+                        </button>
+                        <button class="cute-button" onclick="app.setDifficulty(false)">
+                            <span class="button-emoji">😎</span>
+                            <span class="button-text">없었어</span>
+                        </button>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="toResultsButton" onclick="app.goToScreen3()" disabled style="margin-top: 30px; width: auto; padding: 14px 48px; border-radius: 50px; font-size: 18px; font-weight: 700; letter-spacing: 1px; box-shadow: 0 6px 20px rgba(74,125,255,0.35);">
+                    결과 보기! 🎉
+                </button>
+            </div>
+
+            <!-- SCREEN 3: RESULTS -->
+            <div id="screen3" class="screen">
+                <div class="result-header">
+                    <h2 class="screen-title">읽기 결과</h2>
+                    <div class="ttori-container" style="margin: 15px 0; min-height: auto;">
+                        <div style="text-align: center;">
+                            <div class="ttori happy" style="width: 90px; height: 110px; margin: 0 auto;">
+                                <svg viewBox="0 0 140 170" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="70" cy="52" r="46" fill="#E8EFF5" stroke="#CBD5E0" stroke-width="2"/>
+                                    <circle cx="70" cy="52" r="38" fill="#D4E6F9" opacity="0.5"/>
+                                    <circle cx="70" cy="55" r="32" fill="#FDDCB5"/>
+                                    <path d="M42 42 Q50 18 70 20 Q90 18 98 42" fill="#6B4226"/>
+                                    <path d="M48 38 Q55 28 65 30 Q58 22 70 20 Q82 22 75 30 Q85 28 92 38" fill="#8B5E3C"/>
+                                    <ellipse cx="55" cy="35" rx="8" ry="5" fill="#8B5E3C"/>
+                                    <ellipse cx="85" cy="35" rx="7" ry="4" fill="#8B5E3C"/>
+                                    <g class="eyes-open">
+                                        <ellipse cx="57" cy="52" rx="8" ry="10" fill="white"/>
+                                        <ellipse cx="83" cy="52" rx="8" ry="10" fill="white"/>
+                                        <circle cx="59" cy="53" r="5.5" fill="#3E2723"/>
+                                        <circle cx="85" cy="53" r="5.5" fill="#3E2723"/>
+                                        <circle cx="57" cy="50" r="2.5" fill="white"/>
+                                        <circle cx="83" cy="50" r="2.5" fill="white"/>
+                                    </g>
+                                    <ellipse cx="44" cy="62" rx="7" ry="4" fill="#FFB0C0" opacity="0.6"/>
+                                    <ellipse cx="96" cy="62" rx="7" ry="4" fill="#FFB0C0" opacity="0.6"/>
+                                    <path d="M62 67 Q70 76 78 67" stroke="#E85D75" stroke-width="2" fill="#FF8A9E" stroke-linecap="round"/>
+                                    <rect x="40" y="90" rx="18" ry="18" width="60" height="65" fill="#5B9BD5" stroke="#4A8AC4" stroke-width="1.5"/>
+                                    <polygon points="70,98 65,108 75,108" fill="#FFD700"/>
+                                    <rect x="50" y="125" rx="2" width="12" height="4" fill="#FFD700"/>
+                                    <rect x="78" y="125" rx="2" width="12" height="4" fill="#FFD700"/>
+                                    <rect x="48" y="155" rx="6" width="16" height="14" fill="white" stroke="#E0E0E0" stroke-width="1"/>
+                                    <rect x="76" y="155" rx="6" width="16" height="14" fill="white" stroke="#E0E0E0" stroke-width="1"/>
+                                </svg>
+                            </div>
+                            <div class="speech-bubble" id="resultBubble" style="max-width: 200px; margin: 10px auto;">
+                                와! 별이 반짝였어! ✨
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stars-display" id="starsDisplay"></div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="stat-grid" id="statisticsGrid"></div>
+
+                <!-- Error Summary -->
+                <div class="error-summary" id="errorSummary"></div>
+
+                <!-- Comparison Section -->
+                <div class="comparison-card">
+                    <div class="comparison-title">📖 원문</div>
+                    <div class="text-display" id="originalText"></div>
+                </div>
+
+                <div class="comparison-card">
+                    <div class="comparison-title">🎤 읽은 텍스트</div>
+                    <div class="text-display" id="recognizedText"></div>
+                </div>
+
+                <div class="comparison-card">
+                    <div class="comparison-title">📊 비교 분석</div>
+                    <div class="text-display" id="comparisonText"></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="app.goToScreen2()">
+                        한 번 더 도전하면 더 멋질 거야 💪
+                    </button>
+                    <button class="btn btn-secondary" onclick="app.goToScreen4()">
+                        🚀 탐험 완료!
+                    </button>
+                </div>
+            </div>
+
+            <!-- SCREEN 4: COMPLETION SCREEN -->
+            <div id="screen4" class="screen">
+                <div class="completion-header">
+                    <h2 class="completion-title">오늘 탐험 완료! 🚀</h2>
+                </div>
+
+                <div class="completion-stars">
+                    <div class="stars-earned" id="completionStarsEarned"></div>
+                    <div class="stars-earned-text" id="completionStarsText"></div>
+                </div>
+
+                <div class="level-up-section" id="levelUpSection" style="display: none;">
+                    <div class="level-up-celebration">
+                        🎉 레벨 업!
+                    </div>
+                    <div class="level-up-message" id="levelUpMessage"></div>
+                    <div class="level-up-animation" id="levelUpAnimation"></div>
+                </div>
+
+                <div class="level-progress-section">
+                    <div class="progress-bar-large">
+                        <div class="progress-fill-large" id="completionProgressFill"></div>
+                    </div>
+                    <div class="progress-text-large" id="completionProgressText"></div>
+                </div>
+
+                <div class="completion-stats">
+                    <div class="stat-box">
+                        <div class="stat-box-label">총 탐험 횟수</div>
+                        <div class="stat-box-value" id="totalSessionsDisplay">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-box-label">모은 별</div>
+                        <div class="stat-box-value" id="totalStarsDisplay">0 ⭐</div>
+                    </div>
+                </div>
+
+                <div class="completion-message">
+                    <div class="lumi-says" id="lumiCompletionMessage">
+                        오늘도 멋진 탐험이었어! 내일도 만나자! 🌟
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="button-group" style="gap: 12px;">
+                    <button class="btn btn-primary" onclick="app.goToScreen0()" style="flex: 1;">
+                        🏠 홈으로
+                    </button>
+                    <button class="btn btn-secondary" onclick="app.goToScreen1()" style="flex: 1;">
+                        🚀 바로 다시 탐험!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Speech Recognition Setup
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'ko-KR';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+        }
+
+        // Sample Passages
+        const passages = [
+            {
+                id: 1,
+                text: "나무 위에 새가 있다. 새는 노래를 한다.",
+                syllables: 19
+            },
+            {
+                id: 2,
+                text: "엄마가 시장에 갔다. 사과와 배를 샀다.",
+                syllables: 19
+            },
+            {
+                id: 3,
+                text: "강아지가 공원에서 뛰어 놀았다. 꼬리를 흔들었다.",
+                syllables: 22
+            }
+        ];
+
+        // Main Application
+        const app = {
+            currentPassage: null,
+            recognizedText: '',
+            startTime: null,
+            timerInterval: null,
+            isRecording: false,
+            finalTranscript: '',
+            currentScreen: 'screen0',
+            currentGoal: null,
+            confidence: 2,
+            selfRating: null,
+            feltDifficulty: null,
+            sessionHistory: [],
+            levels: [
+                { level: 1, name: '달 기지', icon: '🌙', requiredSessions: 0, requiredStars: 0 },
+                { level: 2, name: '화성 탐험', icon: '🔴', requiredSessions: 3, requiredStars: 5 },
+                { level: 3, name: '토성 고리', icon: '🪐', requiredSessions: 7, requiredStars: 15 },
+                { level: 4, name: '은하 여행', icon: '🌌', requiredSessions: 12, requiredStars: 30 },
+                { level: 5, name: '별자리 마스터', icon: '⭐', requiredSessions: 20, requiredStars: 50 },
+            ],
+            playerData: {
+                totalSessions: 0,
+                totalStars: 0,
+                currentLevel: 1,
+                badges: []
+            },
+            currentSessionStars: 0,
+
+            init() {
+                if (!SpeechRecognition) {
+                    alert('이 기기에서는 음성 인식이 지원되지 않습니다.\nChrome 브라우저를 사용해주세요.');
+                }
+                this.loadPlayerData();
+                this.updateLevelBadge();
+                this.setupSpeechRecognition();
+            },
+
+            setupSpeechRecognition() {
+                if (!recognition) return;
+
+                let interimTranscript = '';
+
+                recognition.onstart = () => {
+                    this.isRecording = true;
+                    interimTranscript = '';
+                    this.finalTranscript = '';
+                    document.getElementById('soundwave').classList.add('active');
+                    document.getElementById('micStatus').textContent = '루미가 듣고 있어요 ✨';
+                    const rc = document.getElementById('readingChar');
+                    if (rc) rc.classList.add('listening');
+                };
+
+                recognition.onresult = (event) => {
+                    interimTranscript = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            this.finalTranscript += transcript + ' ';
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+
+                    const displayText = this.finalTranscript + interimTranscript;
+                    document.getElementById('micStatus').textContent = displayText || '말씀해주세요...';
+                };
+
+                recognition.onerror = (event) => {
+                    console.error('Speech recognition error:', event.error);
+                    let errorMessage = '오류가 발생했습니다.';
+                    if (event.error === 'no-speech') {
+                        errorMessage = '음성이 감지되지 않았습니다.';
+                    }
+                    document.getElementById('micStatus').textContent = errorMessage;
+                };
+
+                recognition.onend = () => {
+                    this.isRecording = false;
+                    this.recognizedText = this.finalTranscript.trim();
+                    document.getElementById('micButton').classList.remove('recording');
+                    document.getElementById('soundwave').classList.remove('active');
+                    document.getElementById('micStatus').textContent = '완료됨';
+                    document.getElementById('doneButton').disabled = false;
+                    const rc = document.getElementById('readingChar');
+                    if (rc) rc.classList.remove('listening');
+                };
+            },
+
+            selectPassage(id) {
+                this.currentPassage = passages.find(p => p.id === id);
+                document.getElementById('readingText').textContent = this.currentPassage.text;
+                document.getElementById('screen1bPassageTitle').textContent = this.currentPassage.title;
+                this.goToScreen1b();
+            },
+
+            toggleRecording() {
+                if (!recognition) {
+                    alert('음성 인식이 지원되지 않습니다.');
+                    return;
+                }
+
+                if (this.isRecording) {
+                    recognition.stop();
+                } else {
+                    this.recognizedText = '';
+                    this.finalTranscript = '';
+                    this.startTime = Date.now();
+                    this.startTimer();
+                    document.getElementById('micButton').classList.add('recording');
+                    document.getElementById('doneButton').disabled = true;
+                    document.getElementById('micStatus').textContent = '';
+                    recognition.start();
+                }
+            },
+
+            startTimer() {
+                clearInterval(this.timerInterval);
+                this.timerInterval = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+                    document.getElementById('timerDisplay').textContent = `⏱️ ${elapsed}초`;
+                }, 100);
+            },
+
+            finishReading() {
+                clearInterval(this.timerInterval);
+                if (this.isRecording && recognition) {
+                    recognition.stop();
+                }
+
+                const readingTime = Math.floor((Date.now() - this.startTime) / 1000);
+                const results = this.analyzeReading(this.recognizedText, readingTime);
+                this.currentResults = results;
+                this.goToScreen2b();
+            },
+
+            analyzeReading(recognizedText, readingTime) {
+                const original = this.currentPassage.text;
+                const recognized = recognizedText || '[음성이 감지되지 않음]';
+
+                const originalWords = this.tokenizeKorean(original);
+                const recognizedWords = this.tokenizeKorean(recognized);
+
+                const errors = this.detectErrors(originalWords, recognizedWords);
+
+                const correctSyllables = errors.correctSyllables;
+                const totalSyllables = this.currentPassage.syllables;
+                const accuracy = Math.round((correctSyllables / totalSyllables) * 100);
+
+                // CWPM = 정확하게 읽은 음절 수 / 읽기 시간(분)
+                const cwpm = readingTime > 0
+                    ? Math.round((correctSyllables / readingTime) * 60)
+                    : 0;
+
+                const readingSpeed = readingTime > 0
+                    ? Math.round((totalSyllables / readingTime) * 60)
+                    : 0;
+
+                const totalErrors = errors.substitution.length + errors.omission.length
+                    + errors.addition.length + errors.repetition.length;
+                const errorRate = totalSyllables > 0
+                    ? Math.round(((totalSyllables - correctSyllables) / totalSyllables) * 100)
+                    : 0;
+
+                return {
+                    original,
+                    recognized,
+                    originalWords,
+                    recognizedWords,
+                    errors,
+                    totalSyllables,
+                    correctSyllables,
+                    accuracy,
+                    readingTime,
+                    readingSpeed,
+                    cwpm,
+                    totalErrors,
+                    errorRate,
+                    errorCounts: {
+                        substitution: errors.substitution.length,
+                        omission: errors.omission.length,
+                        addition: errors.addition.length,
+                        repetition: errors.repetition.length,
+                        selfCorrection: errors.selfCorrection.length
+                    }
+                };
+            },
+
+            tokenizeKorean(text) {
+                return text.split(/[\s\n]+/).filter(word => word.length > 0);
+            },
+
+            detectErrors(original, recognized) {
+                const errors = {
+                    substitution: [],
+                    omission: [],
+                    addition: [],
+                    repetition: [],
+                    selfCorrection: [],
+                    correct: [],
+                    correctSyllables: 0,
+                    mapping: []
+                };
+
+                // --- 1단계: 반복(repetition) 탐지 ---
+                // 연속으로 같은 단어가 나오면 반복으로 판정
+                const cleanRecognized = [];
+                for (let i = 0; i < recognized.length; i++) {
+                    if (i > 0 && recognized[i] === recognized[i - 1]) {
+                        errors.repetition.push(recognized[i]);
+                    } else {
+                        cleanRecognized.push(recognized[i]);
+                    }
+                }
+
+                // --- 2단계: 자기교정(self-correction) 탐지 ---
+                // "틀린 단어 → 바로 다음에 정확한 단어" 패턴 감지
+                const finalRecognized = [];
+                for (let i = 0; i < cleanRecognized.length; i++) {
+                    if (i + 1 < cleanRecognized.length && original.includes(cleanRecognized[i + 1])) {
+                        // 현재 단어가 원문에 없고, 다음 단어가 원문에 있으면 자기교정
+                        if (!original.includes(cleanRecognized[i]) && this.isSimilar(cleanRecognized[i], cleanRecognized[i + 1])) {
+                            errors.selfCorrection.push({ wrong: cleanRecognized[i], corrected: cleanRecognized[i + 1] });
+                            // 교정된 정확한 단어는 유지
+                            continue;
+                        }
+                    }
+                    finalRecognized.push(cleanRecognized[i]);
+                }
+
+                // --- 3단계: 대치·생략·첨가 탐지 (LCS 기반) ---
+                const recognized_copy = [...finalRecognized];
+
+                for (let i = 0; i < original.length; i++) {
+                    const origWord = original[i];
+                    const exactIdx = recognized_copy.indexOf(origWord);
+
+                    if (exactIdx !== -1) {
+                        errors.correct.push(origWord);
+                        errors.correctSyllables += this.countSyllables(origWord);
+                        recognized_copy.splice(exactIdx, 1);
+                        errors.mapping.push({ original: origWord, recognized: origWord, type: 'correct' });
+                    } else {
+                        let found = false;
+                        // 유사도 비교로 대치 탐지 (첫 글자 포함 → 유사도 기반으로 개선)
+                        for (let j = 0; j < recognized_copy.length; j++) {
+                            if (this.isSimilar(origWord, recognized_copy[j])) {
+                                errors.substitution.push({ from: origWord, to: recognized_copy[j] });
+                                errors.mapping.push({
+                                    original: origWord,
+                                    recognized: recognized_copy[j],
+                                    type: 'substitution'
+                                });
+                                recognized_copy.splice(j, 1);
+                                found = true;
+                                break;
+                            }
+                        }
+
+                        if (!found) {
+                            errors.omission.push(origWord);
+                            errors.mapping.push({
+                                original: origWord,
+                                recognized: null,
+                                type: 'omission'
+                            });
+                        }
+                    }
+                }
+
+                recognized_copy.forEach(word => {
+                    errors.addition.push(word);
+                    errors.mapping.push({
+                        original: null,
+                        recognized: word,
+                        type: 'addition'
+                    });
+                });
+
+                // 반복·자기교정 매핑 추가 (원문 비교에 표시용)
+                errors.repetition.forEach(word => {
+                    errors.mapping.push({ original: word, recognized: word, type: 'repetition' });
+                });
+                errors.selfCorrection.forEach(item => {
+                    errors.mapping.push({ original: item.wrong, recognized: item.corrected, type: 'self-correction' });
+                });
+
+                return errors;
+            },
+
+            // 두 한국어 단어의 유사도 비교 (음절 단위)
+            isSimilar(word1, word2) {
+                if (!word1 || !word2) return false;
+                const len = Math.max(word1.length, word2.length);
+                if (len === 0) return false;
+                let match = 0;
+                const minLen = Math.min(word1.length, word2.length);
+                for (let i = 0; i < minLen; i++) {
+                    if (word1[i] === word2[i]) match++;
+                }
+                return (match / len) >= 0.3; // 30% 이상 음절 일치 시 대치로 판정
+            },
+
+            countSyllables(text) {
+                const koreanRegex = /[\uAC00-\uD7AF]/g;
+                return (text.match(koreanRegex) || []).length;
+            },
+
+            displayResults(results) {
+                // Determine stars and message
+                const accuracy = results.accuracy;
+                let starCount = 1;
+                let message = '괜찮아, 천천히 읽어도 좋아 😊';
+
+                if (accuracy >= 85) {
+                    starCount = 3;
+                    message = '와! 별이 반짝였어! ✨ 대단해!';
+                } else if (accuracy >= 60) {
+                    starCount = 2;
+                    message = '이번엔 더 또박또박 읽어볼까? 거의 다 왔어!';
+                }
+
+                // Display stars
+                let starsHtml = '';
+                for (let i = 0; i < starCount; i++) {
+                    starsHtml += '<span class="star-icon">⭐</span>';
+                }
+                document.getElementById('starsDisplay').innerHTML = starsHtml;
+                document.getElementById('resultBubble').textContent = message;
+
+                // Trigger confetti for 3 stars
+                if (starCount === 3) {
+                    this.createConfetti();
+                }
+
+                // Display statistics (BASA 기준)
+                const statsHtml = `
+                    <div class="stat-card accent-pink">
+                        <div class="stat-icon">🚀</div>
+                        <div class="stat-label">CWPM</div>
+                        <div class="stat-value">${results.cwpm}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-label">정확도</div>
+                        <div class="stat-value">${results.accuracy}%</div>
+                    </div>
+                    <div class="stat-card accent-green">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-label">정확 음절</div>
+                        <div class="stat-value">${results.correctSyllables}/${results.totalSyllables}</div>
+                    </div>
+                    <div class="stat-card accent-orange">
+                        <div class="stat-icon">⏱️</div>
+                        <div class="stat-label">읽기 시간</div>
+                        <div class="stat-value">${results.readingTime}초</div>
+                    </div>
+                `;
+                document.getElementById('statisticsGrid').innerHTML = statsHtml;
+
+                // Display BASA error summary (5가지 오류 유형)
+                const ec = results.errorCounts;
+                const total = results.totalErrors;
+                const maxBar = Math.max(ec.substitution, ec.omission, ec.addition, ec.repetition, ec.selfCorrection, 1);
+
+                const errorTypes = [
+                    { key: 'substitution', label: '대치', desc: '다른 단어로 읽음', marker: 'S', color: '#E74C3C', count: ec.substitution },
+                    { key: 'omission', label: '생략', desc: '단어를 건너뜀', marker: 'O', color: '#FF8C42', count: ec.omission },
+                    { key: 'addition', label: '첨가', desc: '없는 단어를 읽음', marker: 'A', color: '#4A7DFF', count: ec.addition },
+                    { key: 'repetition', label: '반복', desc: '같은 단어를 되풀이', marker: 'R', color: '#AB47BC', count: ec.repetition },
+                    { key: 'self-correction', label: '자기교정', desc: '틀린 후 스스로 고침', marker: 'SC', color: '#26A69A', count: ec.selfCorrection },
+                ];
+
+                let errorItemsHtml = '';
+                errorTypes.forEach(e => {
+                    errorItemsHtml += `
+                        <div class="error-item">
+                            <div class="error-marker ${e.key}" style="min-width:32px; text-align:center;">${e.marker}</div>
+                            <div style="flex:1;">
+                                <div class="error-description">${e.label} <span style="color:#999; font-size:12px;">${e.desc}</span></div>
+                                <div class="error-bar-track">
+                                    <div class="error-bar-fill" style="width:${(e.count/maxBar)*100}%; background:${e.color};"></div>
+                                </div>
+                            </div>
+                            <div class="error-count">${e.count}개</div>
+                        </div>
+                    `;
+                });
+
+                const errorHtml = `
+                    <div class="basa-header">
+                        <div class="comparison-title" style="margin:0;">읽기 오류 분석</div>
+                        <div class="basa-badge">BASA 기준</div>
+                    </div>
+                    <div class="basa-total-errors">
+                        총 오류 <strong>${total}개</strong> · 오류율 ${results.errorRate}%
+                        ${ec.selfCorrection > 0 ? ` · 자기교정 ${ec.selfCorrection}회 👍` : ''}
+                    </div>
+                    ${total === 0 && ec.selfCorrection === 0 ? `
+                        <div class="perfect-score">오늘의 리딩플로우: 완벽해! 🎉</div>
+                    ` : errorItemsHtml}
+                `;
+                document.getElementById('errorSummary').innerHTML = errorHtml;
+
+                // Store session data for history
+                const sessionData = {
+                    goal: this.currentGoal,
+                    confidence: this.confidence,
+                    selfRating: this.selfRating,
+                    feltDifficulty: this.feltDifficulty,
+                    accuracy: results.accuracy,
+                    stars: starCount,
+                    timestamp: new Date()
+                };
+                this.sessionHistory.push(sessionData);
+
+                // Save stars for completion screen
+                this.currentSessionStars = starCount;
+
+                // Display metacognitive comparison (Goal vs Actual)
+                if (this.currentGoal || this.selfRating !== null) {
+                    const goalLabels = {
+                        'accuracy': '⭐ 정확하게 읽기',
+                        'speed': '🚀 빠르게 읽기',
+                        'reduction': '💪 틀린 부분 줄이기'
+                    };
+                    
+                    let metacogHtml = '<div class="metacognitive-card">';
+                    metacogHtml += '<div class="comparison-title">🎯 목표 vs 결과</div>';
+                    
+                    if (this.currentGoal) {
+                        metacogHtml += '<div class="comparison-row">';
+                        metacogHtml += '<div class="comparison-item"><div class="comparison-label">설정한 목표</div><div class="comparison-value">' + (goalLabels[this.currentGoal] || '미설정') + '</div></div>';
+                        metacogHtml += '<div class="comparison-item"><div class="comparison-label">자신감 수준</div><div class="comparison-value">😐</div></div>';
+                        metacogHtml += '</div>';
+                    }
+                    
+                    if (this.selfRating !== null) {
+                        const diffPercent = Math.abs(this.selfRating * 20 - results.accuracy);
+                        metacogHtml += '<div class="comparison-row">';
+                        metacogHtml += '<div class="comparison-item"><div class="comparison-label">자기평가</div><div class="comparison-value">' + (this.selfRating * 20) + '%</div></div>';
+                        metacogHtml += '<div class="comparison-item"><div class="comparison-label">AI 측정</div><div class="comparison-value">' + results.accuracy + '%</div></div>';
+                        metacogHtml += '</div>';
+                        
+                        if (diffPercent > 20) {
+                            metacogHtml += '<div class="metacognitive-message">AI가 측정한 결과와 조금 달라! 다음엔 더 정확하게 판단해보자 👀</div>';
+                        }
+                    }
+                    
+                    metacogHtml += '</div>';
+                    document.getElementById('errorSummary').insertAdjacentHTML('afterend', metacogHtml);
+                }
+
+                // Display adaptive scaffold message
+                let scaffoldMessage = '';
+                if (results.accuracy >= 85) {
+                    scaffoldMessage = '🌟 루미: "와! 별이 반짝였어! 다음엔 좀 더 빠르게 도전해볼까?"';
+                } else if (results.accuracy >= 60 && this.currentGoal === 'accuracy') {
+                    scaffoldMessage = '📖 루미: "괜찮아, 천천히 읽어도 좋아! 또박또박 읽어보자!"';
+                } else if (results.accuracy < 60) {
+                    scaffoldMessage = '💪 루미: "괜찮아! 한 번 더 읽어보면 훨씬 나아질 거야!"';
+                } else if (results.errorCounts.repetition > 2) {
+                    scaffoldMessage = '👀 루미: "눈으로 먼저 천천히 읽어보고, 소리 내서 읽어볼까?"';
+                } else if (results.errorCounts.selfCorrection > 0) {
+                    scaffoldMessage = '👍 루미: "스스로 고쳐 읽었어! 이건 정말 잘한 거야!"';
+                }
+
+                if (scaffoldMessage) {
+                    const scaffoldHtml = '<div class="scaffold-message"><div class="scaffold-text">' + scaffoldMessage + '</div></div>';
+                    document.getElementById('errorSummary').insertAdjacentHTML('afterend', scaffoldHtml);
+                }
+
+                // Display session history (progress tracking)
+                const historyHtml = '<div class="session-history"><div class="history-title">📊 읽기 기록</div><div class="history-bar-container">' + 
+                    this.sessionHistory.map((session, idx) => {
+                        const height = (session.accuracy || 0) + '%';
+                        return '<div class="history-bar" style="height:' + height + '; min-height:20px;"></div>';
+                    }).join('') + 
+                    '</div></div>';
+                document.getElementById('errorSummary').insertAdjacentHTML('afterend', historyHtml);
+
+
+                // Display texts
+                document.getElementById('originalText').textContent = results.original;
+                document.getElementById('recognizedText').textContent = results.recognized;
+
+                // Display comparison (클릭으로 재분류 가능)
+                this.currentResults = results;
+                let comparisonHtml = '<div class="teacher-note">✏️ 단어를 탭하면 오류 유형을 수정할 수 있어요 (교사용)</div>';
+                results.errors.mapping.forEach((item, idx) => {
+                    const word = item.original || item.recognized;
+                    const dataAttrs = `data-idx="${idx}" data-type="${item.type}" onclick="app.openReclassify(${idx})"`;
+                    if (item.type === 'correct') {
+                        comparisonHtml += `<span class="word-diff word-correct" ${dataAttrs}>${item.original}</span> `;
+                    } else if (item.type === 'substitution') {
+                        comparisonHtml += `<span class="word-diff word-substitution" ${dataAttrs} data-correction="${item.recognized}">${item.original}</span> `;
+                    } else if (item.type === 'omission') {
+                        comparisonHtml += `<span class="word-diff word-omission" ${dataAttrs}>${item.original}</span> `;
+                    } else if (item.type === 'addition') {
+                        comparisonHtml += `<span class="word-diff word-addition" ${dataAttrs}>+ ${item.recognized}</span> `;
+                    } else if (item.type === 'repetition') {
+                        comparisonHtml += `<span class="word-diff word-repetition" ${dataAttrs}>↻ ${item.original}</span> `;
+                    } else if (item.type === 'self-correction') {
+                        comparisonHtml += `<span class="word-diff word-self-correction" ${dataAttrs}>✓ ${item.recognized}</span> `;
+                    }
+                });
+                document.getElementById('comparisonText').innerHTML = comparisonHtml;
+            },
+
+            // ===== 교사 재분류 기능 =====
+            openReclassify(idx) {
+                const item = this.currentResults.errors.mapping[idx];
+                const word = item.original || item.recognized;
+                const currentType = item.type;
+
+                const types = [
+                    { key: 'correct', label: '정확', desc: '올바르게 읽음', marker: '✓', color: '#4CAF50' },
+                    { key: 'substitution', label: '대치', desc: '다른 단어로 읽음', marker: 'S', color: '#E74C3C' },
+                    { key: 'omission', label: '생략', desc: '단어를 건너뜀', marker: 'O', color: '#FF8C42' },
+                    { key: 'addition', label: '첨가', desc: '없는 단어를 읽음', marker: 'A', color: '#4A7DFF' },
+                    { key: 'repetition', label: '반복', desc: '같은 단어를 되풀이', marker: 'R', color: '#AB47BC' },
+                    { key: 'self-correction', label: '자기교정', desc: '틀린 후 스스로 고침', marker: 'SC', color: '#26A69A' },
+                ];
+
+                let optionsHtml = '';
+                types.forEach(t => {
+                    const isActive = t.key === currentType ? 'active' : '';
+                    optionsHtml += `
+                        <button class="reclassify-btn ${isActive}" onclick="app.applyReclassify(${idx}, '${t.key}')">
+                            <div class="rc-marker" style="background:${t.color}">${t.marker}</div>
+                            <div>
+                                <div style="font-size:14px;">${t.label}</div>
+                                <div style="font-size:11px; color:#999; font-weight:400;">${t.desc}</div>
+                            </div>
+                        </button>
+                    `;
+                });
+
+                const popup = document.createElement('div');
+                popup.id = 'reclassifyModal';
+                popup.innerHTML = `
+                    <div class="reclassify-overlay" onclick="app.closeReclassify()"></div>
+                    <div class="reclassify-popup">
+                        <div class="reclassify-title">오류 유형 수정</div>
+                        <div class="reclassify-word">"${word}"</div>
+                        <div class="reclassify-options">${optionsHtml}</div>
+                    </div>
+                `;
+                document.body.appendChild(popup);
+            },
+
+            closeReclassify() {
+                const modal = document.getElementById('reclassifyModal');
+                if (modal) modal.remove();
+            },
+
+            applyReclassify(idx, newType) {
+                const mapping = this.currentResults.errors.mapping;
+                const oldType = mapping[idx].type;
+                if (oldType === newType) { this.closeReclassify(); return; }
+
+                // 매핑 타입 변경
+                mapping[idx].type = newType;
+                mapping[idx].teacherEdited = true;
+
+                // 오류 카운트 재계산
+                const counts = { substitution: 0, omission: 0, addition: 0, repetition: 0, selfCorrection: 0 };
+                let correctSyllables = 0;
+                mapping.forEach(item => {
+                    if (item.type === 'correct') {
+                        correctSyllables += this.countSyllables(item.original || '');
+                    } else if (item.type === 'substitution') counts.substitution++;
+                    else if (item.type === 'omission') counts.omission++;
+                    else if (item.type === 'addition') counts.addition++;
+                    else if (item.type === 'repetition') counts.repetition++;
+                    else if (item.type === 'self-correction') counts.selfCorrection++;
+                });
+
+                // 결과 업데이트
+                this.currentResults.errorCounts = counts;
+                this.currentResults.correctSyllables = correctSyllables;
+                this.currentResults.totalErrors = counts.substitution + counts.omission + counts.addition + counts.repetition;
+                this.currentResults.accuracy = Math.round((correctSyllables / this.currentResults.totalSyllables) * 100);
+                this.currentResults.errorRate = Math.round(((this.currentResults.totalSyllables - correctSyllables) / this.currentResults.totalSyllables) * 100);
+                const rt = this.currentResults.readingTime;
+                this.currentResults.cwpm = rt > 0 ? Math.round((correctSyllables / rt) * 60) : 0;
+
+                // UI 전체 다시 그리기
+                this.closeReclassify();
+                this.displayResults(this.currentResults);
+            },
+
+            createConfetti() {
+                const colors = ['#FFD700', '#FF8C42', '#FF6B9D', '#4ECDC4', '#4A7DFF'];
+                for (let i = 0; i < 50; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 0.3 + 's';
+                    document.body.appendChild(confetti);
+
+                    setTimeout(() => confetti.remove(), 3300);
+                }
+            },
+
+            goToScreen1b() {
+                this.showScreen('screen1b');
+                this.selfRating = null;
+                this.feltDifficulty = null;
+            },
+
+            goToScreen2b() {
+                this.showScreen('screen2b');
+                this.selfRating = null;
+                this.feltDifficulty = null;
+                document.getElementById('toResultsButton').disabled = true;
+                // Reset star ratings
+                document.querySelectorAll('.rating-star').forEach(star => {
+                    star.classList.remove('active');
+                });
+                // Reset difficulty buttons
+                document.querySelectorAll('.cute-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+            },
+
+            selectGoal(goal) {
+                this.currentGoal = goal;
+                // Update UI
+                document.querySelectorAll('.goal-card').forEach(card => {
+                    card.classList.remove('active');
+                });
+                event.target.closest('.goal-card').classList.add('active');
+            },
+
+            updateConfidenceLabel() {
+                const slider = document.getElementById('confidenceSlider');
+                const labels = ['매우 낮아요', '낮아요', '보통정도', '높아요'];
+                const displayLabel = document.getElementById('confidenceLabel');
+                this.confidence = parseInt(slider.value);
+                displayLabel.textContent = labels[this.confidence - 1];
+            },
+
+            setSelfRating(rating) {
+                this.selfRating = rating;
+                document.querySelectorAll('.rating-star').forEach((star, idx) => {
+                    if (idx < rating) {
+                        star.classList.add('active');
+                    } else {
+                        star.classList.remove('active');
+                    }
+                });
+                this.updateResultsButtonState();
+            },
+
+            setDifficulty(hasDifficulty) {
+                this.feltDifficulty = hasDifficulty;
+                document.querySelectorAll('.cute-button').forEach((btn, idx) => {
+                    if ((hasDifficulty && idx === 0) || (!hasDifficulty && idx === 1)) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                this.updateResultsButtonState();
+            },
+
+            updateResultsButtonState() {
+                const button = document.getElementById('toResultsButton');
+                if (this.selfRating !== null && this.feltDifficulty !== null) {
+                    button.disabled = false;
+                }
+            },
+            goToScreen1() {
+                this.clearSRLState();
+                this.resetState();
+                this.showScreen('screen1');
+            },
+
+            goToScreen2() {
+                this.resetState();
+                this.showScreen('screen2');
+                document.getElementById('micStatus').textContent = '읽기 시작';
+                document.getElementById('doneButton').disabled = true;
+                document.getElementById('timerDisplay').textContent = '⏱️ 0초';
+                // Store goal and confidence in session history (will be added when reading completes)
+            },
+
+            goToScreen3() {
+                this.displayResults(this.currentResults);
+                this.showScreen('screen3');
+            },
+
+            goToScreen0() {
+                this.clearSRLState();
+                this.resetState();
+                this.updateLevelBadge();
+                this.showScreen('screen0');
+            },
+
+            goToScreen4() {
+                this.showCompletionScreen();
+                this.showScreen('screen4');
+            },
+
+            showScreen(screenId) {
+                document.querySelectorAll('.screen').forEach(screen => {
+                    screen.classList.remove('active');
+                });
+                document.getElementById(screenId).classList.add('active');
+                this.currentScreen = screenId;
+            },
+
+            resetState() {
+                clearInterval(this.timerInterval);
+                if (this.isRecording && recognition) {
+                    recognition.stop();
+                }
+                this.isRecording = false;
+                this.recognizedText = '';
+                this.finalTranscript = '';
+                document.getElementById('micButton').classList.remove('recording');
+                const soundwave = document.getElementById('soundwave');
+                if (soundwave) {
+                    soundwave.classList.remove('active');
+                }
+            },
+
+            updateLevelBadge() {
+                const currentLevel = this.playerData.currentLevel;
+                const levelData = this.levels[currentLevel - 1];
+
+                if (!levelData) return;
+
+                const nextLevel = currentLevel < this.levels.length ? this.levels[currentLevel] : null;
+
+                document.getElementById('levelIcon').textContent = levelData.icon;
+                document.getElementById('levelName').textContent = `Lv.${currentLevel} ${levelData.name}`;
+
+                if (nextLevel) {
+                    const starsNeeded = Math.max(0, nextLevel.requiredStars - this.playerData.totalStars);
+                    const sessionsNeeded = Math.max(0, nextLevel.requiredSessions - this.playerData.totalSessions);
+
+                    if (starsNeeded > 0) {
+                        document.getElementById('levelProgressText').textContent = `다음 레벨까지 ⭐ ${starsNeeded}개 더!`;
+                    } else if (sessionsNeeded > 0) {
+                        document.getElementById('levelProgressText').textContent = `다음 레벨까지 탐험 ${sessionsNeeded}회 더!`;
+                    } else {
+                        document.getElementById('levelProgressText').textContent = `다음 레벨 달성 가능!`;
+                    }
+
+                    const progressPercent = Math.min(100, Math.round((this.playerData.totalStars / nextLevel.requiredStars) * 100));
+                    document.getElementById('levelProgressFill').style.width = progressPercent + '%';
+                } else {
+                    document.getElementById('levelProgressText').textContent = '모든 레벨을 달성했어! 🌟';
+                    document.getElementById('levelProgressFill').style.width = '100%';
+                }
+            },
+
+            updatePlayerData(starsEarned) {
+                this.playerData.totalSessions++;
+                this.playerData.totalStars += starsEarned;
+                this.currentSessionStars = starsEarned;
+
+                // Check for level up
+                let leveledUp = false;
+                while (this.playerData.currentLevel < this.levels.length) {
+                    const nextLevel = this.levels[this.playerData.currentLevel];
+                    if (this.playerData.totalSessions >= nextLevel.requiredSessions &&
+                        this.playerData.totalStars >= nextLevel.requiredStars) {
+                        this.playerData.currentLevel++;
+                        leveledUp = true;
+                    } else {
+                        break;
+                    }
+                }
+
+                this.savePlayerData();
+                return leveledUp;
+            },
+
+            savePlayerData() {
+                try {
+                    localStorage.setItem('readingFlowPlayerData', JSON.stringify(this.playerData));
+                } catch (e) {
+                    console.log('Could not save to localStorage:', e);
+                }
+            },
+
+            loadPlayerData() {
+                try {
+                    const saved = localStorage.getItem('readingFlowPlayerData');
+                    if (saved) {
+                        this.playerData = JSON.parse(saved);
+                    }
+                } catch (e) {
+                    console.log('Could not load from localStorage:', e);
+                }
+            },
+
+            showCompletionScreen() {
+                const starsEarned = this.currentSessionStars;
+                const leveledUp = this.updatePlayerData(starsEarned);
+
+                // Display earned stars
+                let starsHtml = '';
+                for (let i = 0; i < starsEarned; i++) {
+                    starsHtml += '<div class="star-earned">⭐</div>';
+                }
+                document.getElementById('completionStarsEarned').innerHTML = starsHtml;
+                document.getElementById('completionStarsText').textContent = `오늘 모은 별: ${starsEarned}개`;
+
+                // Display level up if applicable
+                const levelUpSection = document.getElementById('levelUpSection');
+                if (leveledUp) {
+                    const currentLevelData = this.levels[this.playerData.currentLevel - 1];
+                    levelUpSection.style.display = 'block';
+                    document.getElementById('levelUpMessage').textContent = `${currentLevelData.name} 달성!`;
+                } else {
+                    levelUpSection.style.display = 'none';
+                }
+
+                // Update progress bar
+                const currentLevelData = this.levels[this.playerData.currentLevel - 1];
+                const nextLevel = this.playerData.currentLevel < this.levels.length ? this.levels[this.playerData.currentLevel] : null;
+
+                if (nextLevel) {
+                    const progressPercent = Math.min(100, Math.round((this.playerData.totalStars / nextLevel.requiredStars) * 100));
+                    document.getElementById('completionProgressFill').style.width = progressPercent + '%';
+                    const starsNeeded = Math.max(0, nextLevel.requiredStars - this.playerData.totalStars);
+                    document.getElementById('completionProgressText').textContent = `Lv.${this.playerData.currentLevel} ${currentLevelData.name} - 다음: ⭐ ${starsNeeded}개`;
+                } else {
+                    document.getElementById('completionProgressFill').style.width = '100%';
+                    document.getElementById('completionProgressText').textContent = `Lv.${this.playerData.currentLevel} ${currentLevelData.name} - 완성!`;
+                }
+
+                // Display stats
+                document.getElementById('totalSessionsDisplay').textContent = this.playerData.totalSessions + '회';
+                document.getElementById('totalStarsDisplay').textContent = this.playerData.totalStars + ' ⭐';
+            },
+
+            // Clear SRL state between sessions
+            clearSRLState() {
+                this.currentGoal = null;
+                this.confidence = 2;
+                this.selfRating = null;
+                this.feltDifficulty = null;
+            }
+        };
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+
+        // Handle visibility change
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && app.isRecording && recognition) {
+                recognition.stop();
+            }
+        });
+    </script>
+</body>
+</html>

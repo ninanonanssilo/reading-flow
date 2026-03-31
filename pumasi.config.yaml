@@ -1,0 +1,631 @@
+pumasi:
+  tasks:
+    # ─── Task 1: BASA 오류탐지 엔진 (순수 TypeScript) ───
+    - name: basa-engine
+      instruction: |
+        C:/Users/HONGSEOK LEE/Documents/reading-flow/ 프로젝트에서 다음 유틸리티 파일들을 구현하세요.
+
+        ## 프로젝트 컨텍스트
+        - 기술 스택: TypeScript 5.8+, ESM
+        - 이 파일들은 React 의존성 없는 순수 함수들입니다
+        - 타입 정의 파일 참조: src/types/index.ts (이미 존재함)
+
+        ## 생성할 파일 목록
+        - src/utils/syllables.ts — 한글 음절 카운트 유틸리티
+        - src/utils/basa.ts — BASA 5유형 오류 탐지 알고리즘
+        - src/utils/cwpm.ts — CWPM(분당 정확 음절 수) 계산
+
+        ## 공통 타입 (src/types/index.ts에서 import)
+        ```typescript
+        import type { ErrorType, WordMapping, ErrorCounts, ReadingAnalysis } from '../types'
+        ```
+
+        ## 파일별 상세
+
+        ### src/utils/syllables.ts
+        역할: 한글 음절(자모) 카운트
+
+        시그니처:
+        ```typescript
+        export function countSyllables(text: string): number
+        ```
+
+        요구사항:
+        - 한글 음절 범위(\uAC00-\uD7AF) 문자만 카운트
+        - 공백, 구두점 등은 무시
+        - 빈 문자열이면 0 반환
+
+        ### src/utils/basa.ts
+        역할: BASA 5유형 오류 탐지 (한국어 읽기유창성 평가)
+
+        시그니처:
+        ```typescript
+        export function isSimilar(word1: string, word2: string): boolean
+        export function detectErrors(original: string, recognized: string): ReadingAnalysis['errors']
+        ```
+
+        요구사항:
+        - isSimilar: 두 어절의 음절(character) 단위 비교, 일치율 30% 이상이면 true
+        - detectErrors: 3단계 파이프라인 구조:
+          - Stage 1: 반복(repetition) 탐지 — 연속 동일 어절 검출 후 제거
+          - Stage 2: 자기교정(selfCorrection) 탐지 — "오류어 → 정답어" 패턴 (isSimilar 활용)
+          - Stage 3: LCS(Longest Common Subsequence) 기반 어절 대조
+            - 정확 일치 → correct
+            - isSimilar === true → substitution (대치)
+            - 매칭 실패 → omission (생략)
+            - 잔여 recognized 어절 → addition (첨가)
+        - mapping 배열: 각 어절의 { original, recognized, type, syllables } 반환
+        - countSyllables를 import하여 사용
+        - correctSyllables: correct로 분류된 어절들의 음절 합
+
+        ### src/utils/cwpm.ts
+        역할: CWPM 및 정확도 계산
+
+        시그니처:
+        ```typescript
+        export function calculateCWPM(correctSyllables: number, readingTimeSeconds: number): number
+        export function calculateAccuracy(correctSyllables: number, totalSyllables: number): number
+        export function calculateErrorRate(correctSyllables: number, totalSyllables: number): number
+        export function analyzeReading(original: string, recognized: string, readingTimeSeconds: number): ReadingAnalysis
+        ```
+
+        요구사항:
+        - calculateCWPM: (correctSyllables / readingTimeSeconds) * 60, Math.round
+        - calculateAccuracy: (correctSyllables / totalSyllables) * 100
+        - calculateErrorRate: ((totalSyllables - correctSyllables) / totalSyllables) * 100
+        - analyzeReading: detectErrors + countSyllables + CWPM 계산을 조합한 통합 함수
+        - 0으로 나누기 방어 처리
+        - detectErrors, countSyllables를 import하여 사용
+
+        ## 기존 MVP 참고
+        - reference/reading_fluency_mvp.html에 기존 구현이 있음 (참고만, 그대로 복사 금지)
+
+        ## 금지사항
+        - 위에 정의되지 않은 파일 생성 금지
+        - 함수 시그니처 변경 금지
+        - 외부 라이브러리 사용 금지 (순수 TypeScript만)
+        - React import 금지
+
+        ## 완료 보고
+        구현 완료 후 다음을 보고하세요:
+        - 생성된 파일 경로 목록
+        - 각 함수의 실제 구현 방식 요약
+        - LCS 알고리즘 구현 방식
+
+      gates:
+        - name: "타입 체크"
+          command: "cd 'C:/Users/HONGSEOK LEE/Documents/reading-flow' && npx tsc --noEmit src/utils/syllables.ts src/utils/basa.ts src/utils/cwpm.ts"
+        - name: "시그니처 확인 - syllables"
+          command: "grep -q 'export function countSyllables' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/utils/syllables.ts'"
+        - name: "시그니처 확인 - basa"
+          command: "grep -q 'export function detectErrors' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/utils/basa.ts' && grep -q 'export function isSimilar' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/utils/basa.ts'"
+        - name: "시그니처 확인 - cwpm"
+          command: "grep -q 'export function analyzeReading' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/utils/cwpm.ts' && grep -q 'export function calculateCWPM' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/utils/cwpm.ts'"
+        - name: "외부 라이브러리 미사용 확인"
+          command: "! grep -rq 'from .\\{1,\\}node_modules\\|require(' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/utils/'"
+
+    # ─── Task 2: 학생 앱 전반부 화면 (screen0, 1, 1b, 4) ───
+    - name: student-screens-a
+      instruction: |
+        C:/Users/HONGSEOK LEE/Documents/reading-flow/ 프로젝트에서 학생 앱 화면 4개를 구현하세요.
+
+        ## 프로젝트 컨텍스트
+        - 기술 스택: React 19, TypeScript 5.8+, Tailwind CSS 4, ESM
+        - 라우팅: react-router-dom v7 (useNavigate, useLocation 사용)
+        - 타입: src/types/index.ts (이미 존재)
+        - 데이터: src/data/passages.ts (지문 3개, goalOptions, levels 이미 존재)
+        - 디자인 테마: 우주 탐험 컨셉, 밝은 그라데이션 배경 (#E8F4FD → #F0E6FF)
+        - 캐릭터: 루미(Lumi) — 우주 탐험 도우미 (이모지 🤖 사용)
+        - 대상: 초등학생 (큰 글씨, 친근한 톤, 이모지 활용)
+
+        ## 생성할 파일 목록
+        - src/student/pages/WelcomeScreen.tsx — 환영 화면 (screen0)
+        - src/student/pages/PassageSelect.tsx — 지문 선택 화면 (screen1)
+        - src/student/pages/GoalSetting.tsx — 목표 설정 화면 (screen1b)
+        - src/student/pages/Completion.tsx — 완료/보상 화면 (screen4)
+        - src/student/components/Lumi.tsx — 루미 캐릭터 컴포넌트
+        - src/student/components/StarRating.tsx — 별점 표시 컴포넌트
+
+        ## 파일별 상세
+
+        ### src/student/components/Lumi.tsx
+        역할: 루미 캐릭터 말풍선 컴포넌트
+
+        시그니처:
+        ```typescript
+        interface LumiProps { message: string; size?: 'sm' | 'md' | 'lg' }
+        export default function Lumi(props: LumiProps): JSX.Element
+        ```
+
+        요구사항:
+        - 🤖 이모지 + 말풍선 UI
+        - 말풍선은 Tailwind로 스타일링 (둥근 모서리, 그림자)
+        - size에 따라 이모지/텍스트 크기 조절
+
+        ### src/student/components/StarRating.tsx
+        역할: 별점 표시 (읽기/쓰기)
+
+        시그니처:
+        ```typescript
+        interface StarRatingProps { value: number; max?: number; onChange?: (v: number) => void; readonly?: boolean }
+        export default function StarRating(props: StarRatingProps): JSX.Element
+        ```
+
+        요구사항:
+        - max 기본값 5
+        - readonly면 클릭 불가
+        - 채워진 별 ⭐ / 빈 별 ☆ 사용
+        - 호버 시 미리보기 (readonly 아닐 때)
+
+        ### src/student/pages/WelcomeScreen.tsx
+        역할: 환영 화면 (screen0)
+
+        시그니처:
+        ```typescript
+        export default function WelcomeScreen(): JSX.Element
+        ```
+
+        요구사항:
+        - "읽기 우주탐험대" 타이틀 + 루미 캐릭터 인사
+        - "시작하기" 버튼 → /passage로 이동 (useNavigate)
+        - 우주 테마 배경 (별 장식 등 CSS 애니메이션)
+        - localStorage에서 playerData 로드하여 이름 표시 (없으면 이름 입력 필드)
+        - Tailwind CSS만 사용
+
+        ### src/student/pages/PassageSelect.tsx
+        역할: 지문 선택 화면 (screen1)
+
+        시그니처:
+        ```typescript
+        export default function PassageSelect(): JSX.Element
+        ```
+
+        요구사항:
+        - src/data/passages.ts에서 passages import
+        - 3개 지문을 카드로 표시 (이모지, 제목, 난이도 뱃지)
+        - 난이도별 색상: easy=초록, medium=노랑, hard=빨강
+        - 카드 선택 → state에 저장 후 /goal로 이동
+        - 선택한 passageId를 location.state로 전달
+        - 루미가 "어떤 이야기를 읽어볼까?" 안내
+
+        ### src/student/pages/GoalSetting.tsx
+        역할: 목표 설정 화면 (screen1b) — SRL MC.Planning
+
+        시그니처:
+        ```typescript
+        export default function GoalSetting(): JSX.Element
+        ```
+
+        요구사항:
+        - src/data/passages.ts에서 goalOptions import
+        - 3개 목표를 카드로 표시 (이모지, 라벨, 설명)
+        - 자신감 슬라이더 (1~4: 매우 낮아요/낮아요/높아요/매우 높아요)
+        - location.state에서 passageId 수신
+        - 선택 완료 → /reading으로 이동 (passageId, goalType, confidence를 state로 전달)
+        - 루미가 "오늘의 목표를 정해볼까?" 안내
+
+        ### src/student/pages/Completion.tsx
+        역할: 완료/보상 화면 (screen4)
+
+        시그니처:
+        ```typescript
+        export default function Completion(): JSX.Element
+        ```
+
+        요구사항:
+        - location.state에서 accuracy, cwpm, stars(획득 별) 수신
+        - 별 획득 기준: accuracy >= 85 → 3별, >= 60 → 2별, < 60 → 1별
+        - 레벨업 확인: src/data/passages.ts에서 levels import, playerData와 비교
+        - 레벨업 시 축하 애니메이션 (CSS)
+        - localStorage playerData 업데이트 (totalSessions++, totalStars += stars)
+        - "다시 읽기" → /passage, "홈으로" → / 버튼
+        - 루미가 결과에 따른 격려 메시지
+
+        ## 금지사항
+        - 위에 정의되지 않은 파일 생성 금지
+        - 함수 시그니처 변경 금지
+        - react-router-dom 외 라우팅 라이브러리 사용 금지
+        - CSS 프레임워크는 Tailwind만 사용 (styled-components, emotion 등 금지)
+
+        ## 완료 보고
+        구현 완료 후 다음을 보고하세요:
+        - 생성된 파일 경로 목록
+        - 각 화면의 주요 UI 구성 요약
+        - state 전달 흐름 설명
+
+      gates:
+        - name: "파일 존재 확인"
+          command: "ls 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/student/pages/WelcomeScreen.tsx' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/student/pages/PassageSelect.tsx' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/student/pages/GoalSetting.tsx' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/student/pages/Completion.tsx' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/student/components/Lumi.tsx' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/student/components/StarRating.tsx'"
+        - name: "default export 확인"
+          command: "grep -q 'export default function WelcomeScreen' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/student/pages/WelcomeScreen.tsx' && grep -q 'export default function PassageSelect' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/student/pages/PassageSelect.tsx' && grep -q 'export default function GoalSetting' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/student/pages/GoalSetting.tsx' && grep -q 'export default function Completion' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/student/pages/Completion.tsx'"
+        - name: "Tailwind 사용 확인"
+          command: "grep -q 'className' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/student/pages/WelcomeScreen.tsx'"
+        - name: "react-router 사용 확인"
+          command: "grep -q 'useNavigate\\|useLocation' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/student/pages/PassageSelect.tsx'"
+
+    # ─── Task 3: 학생 앱 읽기 활동 (screen2, 2b) + Speech 훅 ───
+    - name: student-reading
+      instruction: |
+        C:/Users/HONGSEOK LEE/Documents/reading-flow/ 프로젝트에서 읽기 활동 관련 파일들을 구현하세요.
+
+        ## 프로젝트 컨텍스트
+        - 기술 스택: React 19, TypeScript 5.8+, Tailwind CSS 4, ESM
+        - 라우팅: react-router-dom v7 (useNavigate, useLocation)
+        - 타입: src/types/index.ts (이미 존재)
+        - 디자인 테마: 우주 탐험, 밝은 그라데이션 (#E8F4FD → #F0E6FF)
+        - 대상: 초등학생
+
+        ## 생성할 파일 목록
+        - src/hooks/useSpeechRecognition.ts — Web Speech API 커스텀 훅
+        - src/hooks/useLocalStorage.ts — localStorage 커스텀 훅
+        - src/student/pages/ReadingActivity.tsx — 읽기 활동 화면 (screen2)
+        - src/student/pages/SelfAssessment.tsx — 자기평가 화면 (screen2b)
+
+        ## 파일별 상세
+
+        ### src/hooks/useLocalStorage.ts
+        역할: localStorage 동기화 훅
+
+        시그니처:
+        ```typescript
+        export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void]
+        ```
+
+        요구사항:
+        - JSON 직렬화/역직렬화
+        - SSR 안전 (window 체크)
+        - 초기값 lazy 평가
+
+        ### src/hooks/useSpeechRecognition.ts
+        역할: Web Speech API (ko-KR) 래퍼 훅
+
+        시그니처:
+        ```typescript
+        interface UseSpeechRecognitionReturn {
+          isListening: boolean
+          transcript: string
+          error: string | null
+          startListening: () => void
+          stopListening: () => void
+          resetTranscript: () => void
+        }
+        export function useSpeechRecognition(): UseSpeechRecognitionReturn
+        ```
+
+        요구사항:
+        - webkitSpeechRecognition / SpeechRecognition 사용
+        - lang: 'ko-KR'
+        - continuous: true, interimResults: true
+        - onresult에서 최종(isFinal) 결과만 transcript에 누적
+        - onerror에서 error state 업데이트
+        - 브라우저 미지원 시 error에 메시지 설정
+        - cleanup: 컴포넌트 언마운트 시 recognition.stop()
+
+        ### src/student/pages/ReadingActivity.tsx
+        역할: 읽기 활동 화면 (screen2) — 핵심 화면
+
+        시그니처:
+        ```typescript
+        export default function ReadingActivity(): JSX.Element
+        ```
+
+        요구사항:
+        - location.state에서 passageId, goalType, confidence 수신
+        - src/data/passages.ts에서 해당 지문 로드
+        - 지문 텍스트를 큰 글씨로 표시
+        - useSpeechRecognition 훅으로 음성 인식
+        - 타이머 표시 (시작 시 자동 시작, mm:ss 형식)
+        - "녹음 시작" / "녹음 중지" 토글 버튼 (마이크 아이콘)
+        - 녹음 중 빨간색 펄스 애니메이션
+        - 인식된 텍스트를 실시간으로 하단에 표시
+        - "완료" 버튼 → /assess로 이동
+          - state로 전달: passageId, goalType, confidence, recognized(transcript), readingTime(초)
+        - 루미 컴포넌트 사용 (src/student/components/Lumi.tsx가 존재한다고 가정)
+          - import Lumi from '../components/Lumi'
+
+        ### src/student/pages/SelfAssessment.tsx
+        역할: 자기평가 화면 (screen2b) — SRL MC.Evaluation
+
+        시그니처:
+        ```typescript
+        export default function SelfAssessment(): JSX.Element
+        ```
+
+        요구사항:
+        - location.state에서 passageId, goalType, confidence, recognized, readingTime 수신
+        - 별점 (1~5): StarRating 컴포넌트 사용
+          - import StarRating from '../components/StarRating'
+          - StarRating이 존재한다고 가정하고 import
+        - 난이도 평가: "어려웠어요" / "괜찮았어요" 2개 버튼
+        - "다음" 버튼 → /results로 이동
+          - state로 전달: passageId, goalType, confidence, recognized, readingTime, selfRating, feltDifficulty
+        - 루미가 "잘했어! 스스로 평가해볼까?" 안내
+
+        ## 금지사항
+        - 위에 정의되지 않은 파일 생성 금지
+        - 함수 시그니처 변경 금지
+        - react-router-dom 외 라우팅 라이브러리 금지
+        - Tailwind CSS만 사용
+        - 외부 음성인식 라이브러리 금지 (Web Speech API 직접 사용)
+
+        ## 완료 보고
+        구현 완료 후 다음을 보고하세요:
+        - 생성된 파일 경로 목록
+        - Web Speech API 구현 방식
+        - 화면 간 state 전달 흐름
+
+      gates:
+        - name: "파일 존재 확인"
+          command: "ls 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/hooks/useSpeechRecognition.ts' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/hooks/useLocalStorage.ts' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/student/pages/ReadingActivity.tsx' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/student/pages/SelfAssessment.tsx'"
+        - name: "export 확인"
+          command: "grep -q 'export default function ReadingActivity' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/student/pages/ReadingActivity.tsx' && grep -q 'export default function SelfAssessment' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/student/pages/SelfAssessment.tsx'"
+        - name: "Speech API 사용 확인"
+          command: "grep -q 'SpeechRecognition\\|webkitSpeechRecognition' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/hooks/useSpeechRecognition.ts'"
+        - name: "훅 export 확인"
+          command: "grep -q 'export function useSpeechRecognition' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/hooks/useSpeechRecognition.ts' && grep -q 'export function useLocalStorage' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/hooks/useLocalStorage.ts'"
+
+    # ─── Task 4: 교사 대시보드 차트 컴포넌트 (Chart.js) ───
+    - name: teacher-charts
+      instruction: |
+        C:/Users/HONGSEOK LEE/Documents/reading-flow/ 프로젝트에서 교사 대시보드용 Chart.js 차트 컴포넌트 5개를 구현하세요.
+
+        ## 프로젝트 컨텍스트
+        - 기술 스택: React 19, TypeScript 5.8+, Tailwind CSS 4, ESM
+        - 차트 라이브러리: chart.js 4 + react-chartjs-2 (이미 설치됨, 다른 라이브러리로 대체 금지)
+        - 필수 import: import { Chart as ChartJS, ... } from 'chart.js'와 import { Line, Bar, Doughnut } from 'react-chartjs-2'
+        - 타입: src/types/index.ts (DashboardStudent 타입 존재)
+        - 데이터: src/data/mockStudents.ts (8명 학생 목업 데이터 존재)
+
+        ## 생성할 파일 목록
+        - src/teacher/components/charts/ChartSetup.ts — Chart.js 플러그인 등록
+        - src/teacher/components/charts/CWPMTrendChart.tsx — 학급 CWPM 추이 (꺾은선)
+        - src/teacher/components/charts/ErrorDistChart.tsx — BASA 오류 분포 (가로 막대)
+        - src/teacher/components/charts/SRLProcessChart.tsx — SRL 프로세스 분석 (누적 막대)
+        - src/teacher/components/charts/PersonalCWPMChart.tsx — 개인 CWPM 추이 (영역)
+        - src/teacher/components/charts/ErrorDonutChart.tsx — 개인 오류 분포 (도넛)
+
+        ## 파일별 상세
+
+        ### src/teacher/components/charts/ChartSetup.ts
+        역할: Chart.js 전역 플러그인 등록
+
+        요구사항:
+        - CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler 등록
+        - Chart.register(...) 호출
+        - 이 파일을 다른 차트 파일에서 import (side-effect import)
+
+        ### src/teacher/components/charts/CWPMTrendChart.tsx
+        역할: 8주간 학급 CWPM 추이 꺾은선 그래프
+
+        시그니처:
+        ```typescript
+        interface CWPMTrendChartProps { students: DashboardStudent[] }
+        export default function CWPMTrendChart(props: CWPMTrendChartProps): JSX.Element
+        ```
+
+        요구사항:
+        - X축: 1주~8주
+        - 각 학생별 선 + 학급 평균선 (굵은 검정 점선)
+        - 학생별 선은 반투명 색상
+        - 반응형 (responsive: true, maintainAspectRatio: false)
+
+        ### src/teacher/components/charts/ErrorDistChart.tsx
+        역할: BASA 5유형 오류 분포 (학급 전체 합계)
+
+        시그니처:
+        ```typescript
+        interface ErrorDistChartProps { students: DashboardStudent[] }
+        export default function ErrorDistChart(props: ErrorDistChartProps): JSX.Element
+        ```
+
+        요구사항:
+        - 가로 막대(horizontal bar) 차트
+        - 5개 카테고리: 대치(S), 생략(O), 첨가(A), 반복(R), 자기교정(SC)
+        - 각 유형별 색상 구분
+        - indexAxis: 'y'
+
+        ### src/teacher/components/charts/SRLProcessChart.tsx
+        역할: SRL 프로세스 분석 (상위 5명 학생)
+
+        시그니처:
+        ```typescript
+        interface SRLProcessChartProps { students: DashboardStudent[] }
+        export default function SRLProcessChart(props: SRLProcessChartProps): JSX.Element
+        ```
+
+        요구사항:
+        - 누적 가로 막대(stacked bar) 차트
+        - srlScore 상위 5명만 표시
+        - 6개 SRL 프로세스별 색상 구분
+        - scales.x.stacked: true, scales.y.stacked: true
+
+        ### src/teacher/components/charts/PersonalCWPMChart.tsx
+        역할: 개인 CWPM 추이 (선택된 학생 1명)
+
+        시그니처:
+        ```typescript
+        interface PersonalCWPMChartProps { student: DashboardStudent }
+        export default function PersonalCWPMChart(props: PersonalCWPMChartProps): JSX.Element
+        ```
+
+        요구사항:
+        - 영역 차트 (fill: true)
+        - X축: 1주~8주
+        - 파란색 계열 그라데이션 채우기
+
+        ### src/teacher/components/charts/ErrorDonutChart.tsx
+        역할: 개인 오류 분포 도넛 차트
+
+        시그니처:
+        ```typescript
+        interface ErrorDonutChartProps { student: DashboardStudent }
+        export default function ErrorDonutChart(props: ErrorDonutChartProps): JSX.Element
+        ```
+
+        요구사항:
+        - 도넛(doughnut) 차트
+        - S/O/A/R/SC 5개 세그먼트
+        - 중앙에 총 오류 수 표시 (커스텀 플러그인 또는 절대 위치 텍스트)
+
+        ## 금지사항
+        - 위에 정의되지 않은 파일 생성 금지
+        - chart.js + react-chartjs-2 외 차트 라이브러리 사용 금지 (recharts, d3 등 금지)
+        - 함수 시그니처 변경 금지
+        - Tailwind CSS만 사용
+
+        ## 완료 보고
+        구현 완료 후 다음을 보고하세요:
+        - 생성된 파일 경로 목록
+        - Chart.js 등록한 플러그인 목록
+        - 각 차트의 데이터 변환 방식
+
+      gates:
+        - name: "파일 존재 확인"
+          command: "ls 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/components/charts/ChartSetup.ts' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/components/charts/CWPMTrendChart.tsx' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/components/charts/ErrorDistChart.tsx' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/components/charts/SRLProcessChart.tsx' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/components/charts/PersonalCWPMChart.tsx' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/components/charts/ErrorDonutChart.tsx'"
+        - name: "chart.js import 확인"
+          command: "grep -q 'chart.js' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/components/charts/ChartSetup.ts'"
+        - name: "react-chartjs-2 사용 확인"
+          command: "grep -rq 'react-chartjs-2' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/components/charts/'"
+        - name: "default export 확인"
+          command: "grep -q 'export default function CWPMTrendChart' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/components/charts/CWPMTrendChart.tsx'"
+
+    # ─── Task 5: 교사 대시보드 레이아웃 + 테이블 + 상세패널 ───
+    - name: teacher-layout
+      instruction: |
+        C:/Users/HONGSEOK LEE/Documents/reading-flow/ 프로젝트에서 교사 대시보드의 레이아웃, KPI 카드, 학생 테이블, 상세 패널을 구현하세요.
+
+        ## 프로젝트 컨텍스트
+        - 기술 스택: React 19, TypeScript 5.8+, Tailwind CSS 4, ESM
+        - 타입: src/types/index.ts (DashboardStudent, RegulationLevel 타입 존재)
+        - 데이터: src/data/mockStudents.ts (8명 학생 목업 데이터 존재)
+        - 차트 컴포넌트: 별도 태스크에서 구현 중이므로, import만 해두고 존재한다고 가정
+          - 차트 import 경로: '../components/charts/CWPMTrendChart' 등
+        - 디자인: 깔끔한 대시보드 UI, 밝은 배경
+
+        ## 생성할 파일 목록
+        - src/teacher/pages/Dashboard.tsx — 대시보드 메인 페이지
+        - src/teacher/components/KPICards.tsx — KPI 카드 4개
+        - src/teacher/components/StudentTable.tsx — 학생 테이블 (정렬 가능)
+        - src/teacher/components/StudentDetail.tsx — 학생 상세 패널 (사이드바)
+        - src/teacher/components/HHAIRIndicator.tsx — HHAIR 조절 수준 표시
+
+        ## 파일별 상세
+
+        ### src/teacher/components/KPICards.tsx
+        역할: 4개 KPI 지표 카드
+
+        시그니처:
+        ```typescript
+        interface KPICardsProps { students: DashboardStudent[] }
+        export default function KPICards(props: KPICardsProps): JSX.Element
+        ```
+
+        요구사항:
+        - 4개 카드: 학급 평균 CWPM, 학급 평균 정확도, 총 읽기 세션 수, 자기교정 비율
+        - 학급 평균 CWPM = mean(students.recentCwpm)
+        - 학급 평균 정확도 = mean(students.accuracy)
+        - 총 세션 수 = sum(students.cwpmProgress.length × students.length) (목업이므로 근사치)
+        - 자기교정 비율 = mean(students.errorDist.SC)
+        - 각 카드에 이모지 아이콘, 숫자, 라벨
+        - 4열 그리드 (반응형: 모바일 2열)
+
+        ### src/teacher/components/StudentTable.tsx
+        역할: 학생 목록 테이블
+
+        시그니처:
+        ```typescript
+        interface StudentTableProps {
+          students: DashboardStudent[]
+          onSelectStudent: (student: DashboardStudent) => void
+          selectedStudentName?: string
+        }
+        export default function StudentTable(props: StudentTableProps): JSX.Element
+        ```
+
+        요구사항:
+        - 컬럼: 이름, 최근 CWPM, 정확도(%), 주요 오류, SRL 지표, 추세(▲→▼)
+        - 컬럼 헤더 클릭으로 정렬 (오름/내림차순 토글)
+        - 행 클릭 → onSelectStudent 호출
+        - 선택된 행 하이라이트
+        - "주요 오류": errorDist에서 가장 높은 항목의 키(S/O/A/R/SC) 표시
+        - 추세 컬럼: ▲=초록, →=회색, ▼=빨강
+
+        ### src/teacher/components/StudentDetail.tsx
+        역할: 학생 상세 사이드 패널
+
+        시그니처:
+        ```typescript
+        interface StudentDetailProps {
+          student: DashboardStudent
+          onClose: () => void
+        }
+        export default function StudentDetail(props: StudentDetailProps): JSX.Element
+        ```
+
+        요구사항:
+        - 오른쪽 슬라이드인 패널 (fixed position)
+        - 학생 이름 + 닫기 버튼
+        - HHAIRIndicator 컴포넌트 사용 (import from './HHAIRIndicator')
+        - 차트 영역: PersonalCWPMChart + ErrorDonutChart import (존재한다고 가정)
+          - import PersonalCWPMChart from './charts/PersonalCWPMChart'
+          - import ErrorDonutChart from './charts/ErrorDonutChart'
+        - 읽기 과정 타임라인 (이모지 기반: 📖→🔄→✅→🎯)
+        - 교사 메모 textarea + 저장 버튼 (localStorage)
+        - SRL 뱃지 표시
+
+        ### src/teacher/components/HHAIRIndicator.tsx
+        역할: HHAIR 하이브리드 조절 수준 시각화
+
+        시그니처:
+        ```typescript
+        interface HHAIRIndicatorProps { level: RegulationLevel }
+        export default function HHAIRIndicator(props: HHAIRIndicatorProps): JSX.Element
+        ```
+
+        요구사항:
+        - 4단계 프로그레스 바 형태
+        - ai-adjusted=적색, co-regulated=주황색, shared-regulated=파란색, self-regulated=초록색
+        - 현재 단계 강조 + 라벨 표시
+        - Molenaar(2022) 기반 설명 텍스트
+
+        ### src/teacher/pages/Dashboard.tsx
+        역할: 대시보드 메인 페이지 (모든 컴포넌트 조합)
+
+        시그니처:
+        ```typescript
+        export default function Dashboard(): JSX.Element
+        ```
+
+        요구사항:
+        - src/data/mockStudents.ts에서 데이터 import
+        - 상단: 타이틀 "리딩플로우 교사 대시보드" + "학생 앱으로" 링크 (/)
+        - KPICards 컴포넌트
+        - 차트 영역 (2열 그리드): CWPMTrendChart, ErrorDistChart, SRLProcessChart
+          - 차트 import (존재한다고 가정):
+            - import CWPMTrendChart from '../components/charts/CWPMTrendChart'
+            - import ErrorDistChart from '../components/charts/ErrorDistChart'
+            - import SRLProcessChart from '../components/charts/SRLProcessChart'
+        - StudentTable
+        - 학생 선택 시 StudentDetail 사이드 패널 표시
+        - useState로 selectedStudent 관리
+
+        ## 금지사항
+        - 위에 정의되지 않은 파일 생성 금지
+        - Tailwind CSS만 사용
+        - 외부 UI 라이브러리 금지 (shadcn, MUI 등)
+
+        ## 완료 보고
+        구현 완료 후 다음을 보고하세요:
+        - 생성된 파일 경로 목록
+        - Dashboard 레이아웃 구성
+        - 정렬 기능 구현 방식
+
+      gates:
+        - name: "파일 존재 확인"
+          command: "ls 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/pages/Dashboard.tsx' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/components/KPICards.tsx' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/components/StudentTable.tsx' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/components/StudentDetail.tsx' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/components/HHAIRIndicator.tsx'"
+        - name: "default export 확인"
+          command: "grep -q 'export default function Dashboard' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/pages/Dashboard.tsx' && grep -q 'export default function KPICards' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/components/KPICards.tsx' && grep -q 'export default function StudentTable' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/components/StudentTable.tsx'"
+        - name: "mockStudents import 확인"
+          command: "grep -q 'mockStudents' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/pages/Dashboard.tsx'"
+        - name: "useState 사용 확인"
+          command: "grep -q 'useState' 'C:/Users/HONGSEOK LEE/Documents/reading-flow/src/teacher/pages/Dashboard.tsx'"

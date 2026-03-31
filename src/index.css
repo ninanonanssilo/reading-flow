@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+:root {
+  --bg-warm: #FFF9F0;
+  --bg-card: #FFFFFF;
+  --primary: #FF7043;
+  --primary-light: #FFAB91;
+  --secondary: #66BB6A;
+  --accent-yellow: #FFD54F;
+  --accent-blue: #42A5F5;
+  --accent-purple: #AB47BC;
+  --text-main: #3E2723;
+  --text-sub: #795548;
+  --text-light: #A1887F;
+  --shadow-warm: 0 4px 20px rgba(255, 112, 67, 0.12);
+}
+
+body {
+  margin: 0;
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg-warm);
+  color: var(--text-main);
+}
+
+a, button, select, [role="button"], input[type="range"], label[for] {
+  cursor: pointer;
+}
+
+/* 부드러운 스크롤 */
+html {
+  scroll-behavior: smooth;
+}
+
+/* 스크롤바 숨기기 (진행 바) */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 반짝이 애니메이션 */
+@keyframes sparkle {
+  0%, 100% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-sparkle {
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}

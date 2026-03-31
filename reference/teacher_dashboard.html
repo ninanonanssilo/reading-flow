@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>리딩플로우 - 교사용 학습분석 대시보드</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .header-title h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .header-title p {
+            font-size: 1rem;
+            opacity: 0.95;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .control-group select,
+        .control-group input {
+            padding: 0.6rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            background: white;
+            color: #2c3e50;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .control-group input[type="date"] {
+            min-width: 150px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem 2rem 2rem;
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .kpi-title {
+            font-size: 0.95rem;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .kpi-icon {
+            font-size: 1.8rem;
+        }
+
+        .kpi-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-subtitle {
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        /* Charts Section */
+        .chart-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+        }
+
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 1rem;
+        }
+
+        .chart-container-small {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Two Column Layout */
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Student Table */
+        .table-container {
+            overflow-x: auto;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        table thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 700;
+            color: #2c3e50;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        table th:hover {
+            background: #e9ecef;
+        }
+
+        table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        table tbody tr {
+            transition: background 0.2s ease;
+            cursor: pointer;
+        }
+
+        table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        table tbody tr.active {
+            background: #e3f2fd;
+            font-weight: 600;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        /* Sparkline */
+        .sparkline {
+            font-size: 1.2rem;
+        }
+
+        /* Detail Panel */
+        .detail-panel {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .detail-panel.hidden {
+            display: none;
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .detail-header h2 {
+            font-size: 1.5rem;
+            color: #2c3e50;
+        }
+
+        .close-btn {
+            background: #e9ecef;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: #dee2e6;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .detail-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 0.8rem;
+        }
+
+        .detail-section h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+
+        /* Timeline */
+        .reading-timeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .timeline-item {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .timeline-item:not(:last-child)::after {
+            content: '→';
+            position: absolute;
+            right: -0.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            color: #ccc;
+        }
+
+        .timeline-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-label {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: 600;
+        }
+
+        /* Self-evaluation Bar */
+        .eval-comparison {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .eval-bar {
+            flex: 1;
+        }
+
+        .eval-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .eval-label-value {
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        .bar-container {
+            background: #e9ecef;
+            height: 20px;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        /* Notes Area */
+        .notes-area {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 1px solid #e9ecef;
+            border-radius: 0.5rem;
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+        }
+
+        /* Regulation Status */
+        .regulation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .regulation-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.8rem;
+            border-left: 4px solid;
+            text-align: center;
+        }
+
+        .regulation-card.ai-adjusted {
+            border-left-color: #e74c3c;
+            background: #fadbd8;
+        }
+
+        .regulation-card.co-regulated {
+            border-left-color: #ff8c42;
+            background: #fdebd0;
+        }
+
+        .regulation-card.shared-regulated {
+            border-left-color: #4a7dff;
+            background: #d6eaf8;
+        }
+
+        .regulation-card.self-regulated {
+            border-left-color: #26a69a;
+            background: #d0f0ed;
+        }
+
+        .regulation-count {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+        }
+
+        .regulation-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* SRL Process */
+        .srl-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .srl-student-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .srl-student-name {
+            min-width: 100px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #2c3e50;
+        }
+
+        .srl-bar-container {
+            flex: 1;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 0.4rem;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .srl-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: white;
+            font-weight: 700;
+            transition: flex 0.3s ease;
+        }
+
+        .srl-orientation {
+            background: #4a7dff;
+        }
+
+        .srl-planning {
+            background: #26a69a;
+        }
+
+        .srl-monitoring {
+            background: #ffd700;
+            color: #333;
+        }
+
+        .srl-evaluation {
+            background: #ff8c42;
+        }
+
+        .srl-reading {
+            background: #bbb;
+        }
+
+        .srl-rereading {
+            background: #764ba2;
+        }
+
+        /* Footer */
+        footer {
+            background: white;
+            padding: 2rem;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+            margin-top: 3rem;
+            color: #666;
+        }
+
+        .footer-link {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.8rem 1.5rem;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .footer-link:hover {
+            background: #764ba2;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .header-title h1 {
+                font-size: 1.5rem;
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .detail-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .close-btn {
+                align-self: flex-end;
+            }
+
+            table {
+                font-size: 0.85rem;
+            }
+
+            table th, table td {
+                padding: 0.7rem;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+            }
+
+            .header-controls {
+                display: none;
+            }
+
+            .chart-container {
+                page-break-inside: avoid;
+            }
+
+            .detail-panel.hidden {
+                display: none !important;
+            }
+        }
+
+        /* Loading State */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="header-title">
+                <h1>📚 리딩플로우 (Reading Flow)</h1>
+                <p>읽기 우주탐험대 | BASA 기준 읽기유창성 분석</p>
+            </div>
+            <div class="header-controls">
+                <div class="control-group">
+                    <label for="classSelect">학급 선택</label>
+                    <select id="classSelect">
+                        <option>1학년 1반</option>
+                        <option>1학년 2반</option>
+                        <option>1학년 3반</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="dateStart">시작일</label>
+                    <input type="date" id="dateStart" value="2026-02-01">
+                </div>
+                <div class="control-group">
+                    <label for="dateEnd">종료일</label>
+                    <input type="date" id="dateEnd" value="2026-03-30">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <div class="kpi-title">학급 평균 CWPM</div>
+                    <div class="kpi-icon">🚀</div>
+                </div>
+                <div class="kpi-value" id="avgCwpm">45</div>
+                <div class="kpi-subtitle">분당 정확 음절 수</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <div class="kpi-title">평균 정확도</div>
+                    <div class="kpi-icon">📊</div>
+                </div>
+                <div class="kpi-value" id="avgAccuracy">72%</div>
+                <div class="kpi-subtitle">오류율 28%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <div class="kpi-title">총 읽기 세션</div>
+                    <div class="kpi-icon">📚</div>
+                </div>
+                <div class="kpi-value" id="totalSessions">128</div>
+                <div class="kpi-subtitle">이번 학기</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <div class="kpi-title">자기교정 비율</div>
+                    <div class="kpi-icon">✅</div>
+                </div>
+                <div class="kpi-value" id="scRatio">15%</div>
+                <div class="kpi-subtitle">자기조절학습 지표</div>
+            </div>
+        </div>
+
+        <!-- CWPM Progress Chart -->
+        <div class="chart-section">
+            <div class="chart-title">📈 학급 CWPM 추이 (8주)</div>
+            <div class="chart-container">
+                <canvas id="cwpmChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Two Column: BASA Errors & Process -->
+        <div class="two-column">
+            <!-- BASA Error Distribution -->
+            <div class="chart-section">
+                <div class="chart-title">🔍 BASA 오류 유형 분포</div>
+                <div class="chart-container-small">
+                    <canvas id="basaChart"></canvas>
+                </div>
+            </div>
+
+            <!-- SRL Process Analysis -->
+            <div class="chart-section">
+                <div class="chart-title">🎯 자기조절학습(SRL) 프로세스</div>
+                <div class="srl-bars" id="srlBars"></div>
+                <div style="margin-top: 1.5rem; padding: 1rem; background: #f0f4ff; border-radius: 0.5rem;">
+                    <strong style="color: #667eea;">평균 자기평가 정확도: 68%</strong>
+                    <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">자기평가와 AI평가의 일치도</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hybrid Regulation Status -->
+        <div class="chart-section">
+            <div class="chart-title">🔄 하이브리드 조절 단계 현황 (HHAIR)</div>
+            <div class="regulation-grid">
+                <div class="regulation-card ai-adjusted">
+                    <div class="regulation-count">3</div>
+                    <div class="regulation-label">AI 조절</div>
+                </div>
+                <div class="regulation-card co-regulated">
+                    <div class="regulation-count">4</div>
+                    <div class="regulation-label">공동 조절</div>
+                </div>
+                <div class="regulation-card shared-regulated">
+                    <div class="regulation-count">2</div>
+                    <div class="regulation-label">공유 조절</div>
+                </div>
+                <div class="regulation-card self-regulated">
+                    <div class="regulation-count">1</div>
+                    <div class="regulation-label">자기 조절</div>
+                </div>
+            </div>
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 0.8rem; font-size: 0.9rem; color: #666;">
+                <p><strong>AI 조절:</strong> 학생이 AI 피드백에 의존하여 읽기 전략을 조정</p>
+                <p style="margin-top: 0.5rem;"><strong>공동 조절:</strong> AI와 교사의 공동 지원 필요</p>
+                <p style="margin-top: 0.5rem;"><strong>공유 조절:</strong> 학생이 일부 독립적으로 조절 가능</p>
+                <p style="margin-top: 0.5rem;"><strong>자기 조절:</strong> 완전 독립적인 자기조절학습</p>
+            </div>
+        </div>
+
+        <!-- Student Table -->
+        <div class="table-container">
+            <div class="chart-title">👥 학생별 읽기유창성 현황</div>
+            <table id="studentTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">이름</th>
+                        <th onclick="sortTable(1)">최근 CWPM</th>
+                        <th onclick="sortTable(2)">정확도</th>
+                        <th onclick="sortTable(3)">주요 오류</th>
+                        <th onclick="sortTable(4)">SRL 지표</th>
+                        <th onclick="sortTable(5)">추이</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Student Detail Panel -->
+        <div class="detail-panel hidden" id="detailPanel">
+            <div class="detail-header">
+                <h2 id="detailName"></h2>
+                <button class="close-btn" onclick="closeDetailPanel()">닫기 ✕</button>
+            </div>
+
+            <div class="detail-grid">
+                <!-- CWPM Progress -->
+                <div class="chart-section">
+                    <div class="chart-title">개별 CWPM 추이</div>
+                    <div class="chart-container-small">
+                        <canvas id="detailCwpmChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Error Distribution Pie -->
+                <div class="chart-section">
+                    <div class="chart-title">오류 유형 분포</div>
+                    <div class="chart-container-small">
+                        <canvas id="detailErrorChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reading Process Timeline -->
+            <div class="chart-section" style="margin-bottom: 2rem;">
+                <div class="chart-title">읽기 프로세스 시퀀스</div>
+                <div class="reading-timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-icon">📖</div>
+                        <div class="timeline-label">읽기</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-icon">🔄</div>
+                        <div class="timeline-label">재읽기</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-icon">✅</div>
+                        <div class="timeline-label">결과확인</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-icon">🎯</div>
+                        <div class="timeline-label">목표확인</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Self-evaluation -->
+            <div class="chart-section" style="margin-bottom: 2rem;">
+                <div class="chart-title">자기평가 정확도</div>
+                <div class="eval-comparison">
+                    <div class="eval-bar">
+                        <div class="eval-label">
+                            <span>자기평가와 AI평가 일치</span>
+                            <span class="eval-label-value" id="detailSrlScore">82%</span>
+                        </div>
+                        <div class="bar-container">
+                            <div class="bar-fill" style="width: 82%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teacher Notes -->
+            <div class="chart-section">
+                <div class="chart-title">교사 노트</div>
+                <textarea class="notes-area" id="teacherNotes" placeholder="이 학생에 대한 관찰 사항을 기록하세요..."></textarea>
+                <button style="margin-top: 1rem; padding: 0.8rem 1.5rem; background: #667eea; color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600;" onclick="saveNotes()">저장</button>
+            </div>
+
+            <!-- Error Reclassification -->
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 0.8rem; margin-top: 2rem;">
+                <strong style="color: #2c3e50;">교사가 수정한 오류:</strong>
+                <p style="margin-top: 0.5rem; color: #666; font-size: 0.9rem;" id="detailErrorHistory">3건 (지난 2주)</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>리딩플로우 © 2026 | 읽기 우주탐험대 | 캐릭터: 루미 (Lumi)</p>
+        <a href="reading_fluency_mvp.html" class="footer-link">→ 학생용 앱 (읽기 우주탐험대) 열기</a>
+    </footer>
+
+    <script>
+        // Mock Data for 10 students over 8 weeks
+        const studentData = [
+            {
+                name: '김민준',
+                cwpmProgress: [28, 32, 35, 38, 42, 45, 48, 52],
+                accuracy: 75,
+                recentCwpm: 52,
+                errorDist: { S: 12, O: 8, A: 5, R: 3, SC: 4 },
+                srlScore: 85,
+                srProcesses: [
+                    { type: 'orientation', pct: 15 },
+                    { type: 'planning', pct: 20 },
+                    { type: 'monitoring', pct: 25 },
+                    { type: 'evaluation', pct: 15 },
+                    { type: 'reading', pct: 20 },
+                    { type: 'rereading', pct: 5 }
+                ],
+                regulationLevel: 'self-regulated',
+                srlBadge: '목표설정 ✓',
+                trend: '▲'
+            },
+            {
+                name: '이서윤',
+                cwpmProgress: [32, 34, 35, 36, 38, 40, 41, 42],
+                accuracy: 68,
+                recentCwpm: 42,
+                errorDist: { S: 15, O: 12, A: 8, R: 4, SC: 2 },
+                srlScore: 62,
+                srProcesses: [
+                    { type: 'orientation', pct: 20 },
+                    { type: 'planning', pct: 15 },
+                    { type: 'monitoring', pct: 20 },
+                    { type: 'evaluation', pct: 10 },
+                    { type: 'reading', pct: 30 },
+                    { type: 'rereading', pct: 5 }
+                ],
+                regulationLevel: 'shared-regulated',
+                srlBadge: '자기평가 편차 큼',
+                trend: '→'
+            },
+            {
+                name: '박지호',
+                cwpmProgress: [35, 38, 42, 45, 48, 52, 55, 58],
+                accuracy: 78,
+                recentCwpm: 58,
+                errorDist: { S: 10, O: 6, A: 4, R: 2, SC: 6 },
+                srlScore: 88,
+                srProcesses: [
+                    { type: 'orientation', pct: 12 },
+                    { type: 'planning', pct: 22 },
+                    { type: 'monitoring', pct: 28 },
+                    { type: 'evaluation', pct: 18 },
+                    { type: 'reading', pct: 15 },
+                    { type: 'rereading', pct: 5 }
+                ],
+                regulationLevel: 'self-regulated',
+                srlBadge: '목표설정 ✓',
+                trend: '▲'
+            },
+            {
+                name: '최수아',
+                cwpmProgress: [25, 28, 30, 32, 33, 34, 35, 36],
+                accuracy: 65,
+                recentCwpm: 36,
+                errorDist: { S: 18, O: 14, A: 10, R: 5, SC: 1 },
+                srlScore: 55,
+                srProcesses: [
+                    { type: 'orientation', pct: 25 },
+                    { type: 'planning', pct: 12 },
+                    { type: 'monitoring', pct: 18 },
+                    { type: 'evaluation', pct: 8 },
+                    { type: 'reading', pct: 32 },
+                    { type: 'rereading', pct: 5 }
+                ],
+                regulationLevel: 'ai-adjusted',
+                srlBadge: '자기평가 편차 큼',
+                trend: '→'
+            },
+            {
+                name: '정도윤',
+                cwpmProgress: [38, 42, 45, 48, 51, 54, 56, 59],
+                accuracy: 74,
+                recentCwpm: 59,
+                errorDist: { S: 11, O: 7, A: 5, R: 3, SC: 5 },
+                srlScore: 84,
+                srProcesses: [
+                    { type: 'orientation', pct: 16 },
+                    { type: 'planning', pct: 21 },
+                    { type: 'monitoring', pct: 26 },
+                    { type: 'evaluation', pct: 16 },
+                    { type: 'reading', pct: 18 },
+                    { type: 'rereading', pct: 3 }
+                ],
+                regulationLevel: 'shared-regulated',
+                srlBadge: '목표설정 ✓',
+                trend: '▲'
+            },
+            {
+                name: '한서연',
+                cwpmProgress: [30, 33, 36, 39, 41, 44, 46, 48],
+                accuracy: 71,
+                recentCwpm: 48,
+                errorDist: { S: 13, O: 9, A: 6, R: 3, SC: 3 },
+                srlScore: 75,
+                srProcesses: [
+                    { type: 'orientation', pct: 18 },
+                    { type: 'planning', pct: 19 },
+                    { type: 'monitoring', pct: 24 },
+                    { type: 'evaluation', pct: 14 },
+                    { type: 'reading', pct: 22 },
+                    { type: 'rereading', pct: 3 }
+                ],
+                regulationLevel: 'shared-regulated',
+                srlBadge: '목표설정 ✓',
+                trend: '▲'
+            },
+            {
+                name: '강시우',
+                cwpmProgress: [40, 43, 46, 49, 52, 55, 57, 60],
+                accuracy: 76,
+                recentCwpm: 60,
+                errorDist: { S: 10, O: 6, A: 4, R: 2, SC: 5 },
+                srlScore: 86,
+                srProcesses: [
+                    { type: 'orientation', pct: 14 },
+                    { type: 'planning', pct: 22 },
+                    { type: 'monitoring', pct: 27 },
+                    { type: 'evaluation', pct: 17 },
+                    { type: 'reading', pct: 16 },
+                    { type: 'rereading', pct: 4 }
+                ],
+                regulationLevel: 'self-regulated',
+                srlBadge: '목표설정 ✓',
+                trend: '▲'
+            },
+            {
+                name: '윤하은',
+                cwpmProgress: [26, 29, 31, 33, 34, 35, 36, 37],
+                accuracy: 66,
+                recentCwpm: 37,
+                errorDist: { S: 16, O: 13, A: 9, R: 4, SC: 2 },
+                srlScore: 58,
+                srProcesses: [
+                    { type: 'orientation', pct: 23 },
+                    { type: 'planning', pct: 13 },
+                    { type: 'monitoring', pct: 19 },
+                    { type: 'evaluation', pct: 9 },
+                    { type: 'reading', pct: 31 },
+                    { type: 'rereading', pct: 5 }
+                ],
+                regulationLevel: 'co-regulated',
+                srlBadge: '자기평가 편차 큼',
+                trend: '→'
+            },
+            {
+                name: '임건우',
+                cwpmProgress: [33, 36, 39, 42, 45, 47, 50, 52],
+                accuracy: 73,
+                recentCwpm: 52,
+                errorDist: { S: 12, O: 8, A: 5, R: 3, SC: 4 },
+                srlScore: 80,
+                srProcesses: [
+                    { type: 'orientation', pct: 17 },
+                    { type: 'planning', pct: 20 },
+                    { type: 'monitoring', pct: 25 },
+                    { type: 'evaluation', pct: 15 },
+                    { type: 'reading', pct: 21 },
+                    { type: 'rereading', pct: 2 }
+                ],
+                regulationLevel: 'shared-regulated',
+                srlBadge: '목표설정 ✓',
+                trend: '▲'
+            },
+            {
+                name: '조예린',
+                cwpmProgress: [29, 31, 33, 35, 36, 38, 39, 40],
+                accuracy: 70,
+                recentCwpm: 40,
+                errorDist: { S: 14, O: 10, A: 7, R: 4, SC: 2 },
+                srlScore: 68,
+                srProcesses: [
+                    { type: 'orientation', pct: 19 },
+                    { type: 'planning', pct: 18 },
+                    { type: 'monitoring', pct: 22 },
+                    { type: 'evaluation', pct: 12 },
+                    { type: 'reading', pct: 25 },
+                    { type: 'rereading', pct: 4 }
+                ],
+                regulationLevel: 'co-regulated',
+                srlBadge: '자기평가 정확',
+                trend: '→'
+            }
+        ];
+
+        let charts = {};
+        let selectedStudent = null;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+        });
+
+        function initializeDashboard() {
+            calculateKPIs();
+            drawCWPMChart();
+            drawBasaChart();
+            drawSRLBars();
+            populateStudentTable();
+        }
+
+        function calculateKPIs() {
+            const allCwpm = studentData.map(s => s.recentCwpm);
+            const avgCwpm = Math.round(allCwpm.reduce((a, b) => a + b) / allCwpm.length);
+
+            const allAccuracy = studentData.map(s => s.accuracy);
+            const avgAccuracy = Math.round(allAccuracy.reduce((a, b) => a + b) / allAccuracy.length);
+
+            const totalSessions = studentData.reduce((sum, s) => sum + (s.cwpmProgress.length * 16), 0);
+
+            const scData = studentData.map(s => s.errorDist.SC || 0);
+            const avgSC = Math.round(scData.reduce((a, b) => a + b) / scData.length);
+            const scRatio = Math.round((avgSC / (allAccuracy[0] / 100)) * 100);
+
+            document.getElementById('avgCwpm').textContent = avgCwpm;
+            document.getElementById('avgAccuracy').textContent = avgAccuracy + '%';
+            document.getElementById('totalSessions').textContent = totalSessions;
+            document.getElementById('scRatio').textContent = Math.min(scRatio, 20) + '%';
+        }
+
+        function drawCWPMChart() {
+            const ctx = document.getElementById('cwpmChart').getContext('2d');
+
+            const datasets = [];
+            const colors = ['#667eea', '#764ba2', '#26a69a', '#ff8c42', '#e74c3c'];
+
+            // Add individual student lines with light colors
+            studentData.forEach((student, idx) => {
+                datasets.push({
+                    label: student.name,
+                    data: student.cwpmProgress,
+                    borderColor: colors[idx % colors.length],
+                    borderWidth: 1,
+                    opacity: 0.2,
+                    pointRadius: 0,
+                    tension: 0.4,
+                    fill: false
+                });
+            });
+
+            // Add class average line
+            const avgData = [];
+            for (let i = 0; i < 8; i++) {
+                const sum = studentData.reduce((acc, s) => acc + s.cwpmProgress[i], 0);
+                avgData.push(Math.round(sum / studentData.length));
+            }
+
+            datasets.push({
+                label: '학급 평균',
+                data: avgData,
+                borderColor: '#2c3e50',
+                borderWidth: 3,
+                pointRadius: 5,
+                pointBackgroundColor: '#667eea',
+                tension: 0.4,
+                fill: false,
+                tension: 0.4
+            });
+
+            if (charts.cwpm) charts.cwpm.destroy();
+
+            charts.cwpm = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['1주', '2주', '3주', '4주', '5주', '6주', '7주', '8주'],
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: { size: 11 },
+                                boxWidth: 8
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 70,
+                            title: {
+                                display: true,
+                                text: 'CWPM'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function drawBasaChart() {
+            const ctx = document.getElementById('basaChart').getContext('2d');
+
+            // Calculate total errors by type across all students
+            const errorTotals = { S: 0, O: 0, A: 0, R: 0, SC: 0 };
+            studentData.forEach(student => {
+                Object.keys(errorTotals).forEach(key => {
+                    errorTotals[key] += student.errorDist[key] || 0;
+                });
+            });
+
+            if (charts.basa) charts.basa.destroy();
+
+            charts.basa = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['대치(S)', '생략(O)', '첨가(A)', '반복(R)', '자기교정(SC)'],
+                    datasets: [{
+                        label: '오류 건수',
+                        data: [errorTotals.S, errorTotals.O, errorTotals.A, errorTotals.R, errorTotals.SC],
+                        backgroundColor: ['#E74C3C', '#FF8C42', '#4A7DFF', '#AB47BC', '#26A69A'],
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function drawSRLBars() {
+            const container = document.getElementById('srlBars');
+            container.innerHTML = '';
+
+            studentData.slice(0, 5).forEach(student => {
+                const barDiv = document.createElement('div');
+                barDiv.className = 'srl-student-bar';
+
+                let barHTML = `<div class="srl-student-name">${student.name}</div><div class="srl-bar-container">`;
+
+                student.srProcesses.forEach(proc => {
+                    const width = proc.pct;
+                    barHTML += `<div class="srl-segment srl-${proc.type}" style="flex: ${width}"></div>`;
+                });
+
+                barHTML += '</div>';
+                barDiv.innerHTML = barHTML;
+                container.appendChild(barDiv);
+            });
+        }
+
+        function populateStudentTable() {
+            const tbody = document.getElementById('studentTableBody');
+            tbody.innerHTML = '';
+
+            studentData.forEach((student, idx) => {
+                const row = document.createElement('tr');
+                row.onclick = () => showDetailPanel(idx);
+
+                const mainError = Object.keys(student.errorDist).reduce((a, b) =>
+                    student.errorDist[a] > student.errorDist[b] ? a : b
+                );
+
+                const errorLabels = { S: '대치', O: '생략', A: '첨가', R: '반복', SC: '자기교정' };
+
+                row.innerHTML = `
+                    <td>${student.name}</td>
+                    <td><strong>${student.recentCwpm}</strong></td>
+                    <td>${student.accuracy}%</td>
+                    <td>${errorLabels[mainError]} (${student.errorDist[mainError]}건)</td>
+                    <td><span class="${student.srlBadge.includes('편차') ? 'badge badge-warning' : 'badge badge-success'}">${student.srlBadge}</span></td>
+                    <td><span class="sparkline">${student.trend}</span></td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+        function showDetailPanel(idx) {
+            selectedStudent = studentData[idx];
+            const panel = document.getElementById('detailPanel');
+            document.getElementById('detailName').textContent = `${selectedStudent.name} - 상세 분석`;
+            document.getElementById('teacherNotes').value = '';
+            document.getElementById('detailSrlScore').textContent = selectedStudent.srlScore + '%';
+            document.getElementById('detailErrorHistory').textContent = '3건 (지난 2주)';
+
+            panel.classList.remove('hidden');
+
+            setTimeout(() => {
+                drawDetailCWPMChart();
+                drawDetailErrorChart();
+            }, 100);
+
+            panel.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function closeDetailPanel() {
+            document.getElementById('detailPanel').classList.add('hidden');
+            selectedStudent = null;
+        }
+
+        function drawDetailCWPMChart() {
+            const ctx = document.getElementById('detailCwpmChart').getContext('2d');
+
+            if (charts.detailCwpm) charts.detailCwpm.destroy();
+
+            charts.detailCwpm = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['1주', '2주', '3주', '4주', '5주', '6주', '7주', '8주'],
+                    datasets: [{
+                        label: selectedStudent.name + ' CWPM',
+                        data: selectedStudent.cwpmProgress,
+                        borderColor: '#667eea',
+                        borderWidth: 3,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: 'white',
+                        pointBorderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 70
+                        }
+                    }
+                }
+            });
+        }
+
+        function drawDetailErrorChart() {
+            const ctx = document.getElementById('detailErrorChart').getContext('2d');
+
+            const labels = ['대치(S)', '생략(O)', '첨가(A)', '반복(R)', '자기교정(SC)'];
+            const data = [
+                selectedStudent.errorDist.S,
+                selectedStudent.errorDist.O,
+                selectedStudent.errorDist.A,
+                selectedStudent.errorDist.R,
+                selectedStudent.errorDist.SC
+            ];
+
+            if (charts.detailError) charts.detailError.destroy();
+
+            charts.detailError = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: ['#E74C3C', '#FF8C42', '#4A7DFF', '#AB47BC', '#26A69A'],
+                        borderColor: 'white',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 11 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function saveNotes() {
+            const notes = document.getElementById('teacherNotes').value;
+            alert(`"${selectedStudent.name}" 학생에 대한 노트가 저장되었습니다.`);
+        }
+
+        function sortTable(columnIdx) {
+            const tbody = document.getElementById('studentTableBody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            rows.sort((a, b) => {
+                const aVal = a.cells[columnIdx].textContent;
+                const bVal = b.cells[columnIdx].textContent;
+
+                if (!isNaN(aVal.replace(/[^0-9]/g, '')) && !isNaN(bVal.replace(/[^0-9]/g, ''))) {
+                    return parseInt(bVal.replace(/[^0-9]/g, '')) - parseInt(aVal.replace(/[^0-9]/g, ''));
+                }
+
+                return aVal.localeCompare(bVal, 'ko');
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+        }
+    </script>
+</body>
+</html>
