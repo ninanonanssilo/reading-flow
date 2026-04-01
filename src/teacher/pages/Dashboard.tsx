@@ -19,6 +19,7 @@ import { mockStudents } from '../../data/mockStudents'
 import { readPlayerData, writePlayerData } from '../../utils/storage'
 import { getAudioBlob } from '../../utils/audioStorage'
 import { determineHHAIRLevel } from '../../utils/scaffold'
+import { saveTeacherMemo } from '../../lib/api'
 
 ChartJS.register(
   CategoryScale,
@@ -54,7 +55,7 @@ export default function Dashboard() {
   const [realPlayer, setRealPlayer] = useState(() => readPlayerData())
 
   const extendedStudents = useMemo(() => {
-    let list: any[] = [...mockStudents]
+    let list: any[] = showMock ? [...mockStudents] : []
     if (realPlayer.sessions && realPlayer.sessions.length > 0) {
       const latest = realPlayer.sessions[realPlayer.sessions.length - 1]
       const fakeProgress = Array(7).fill(40).map((v, i) => v + i * 2)
@@ -84,10 +85,11 @@ export default function Dashboard() {
       list = [realStudentObj, ...list]
     }
     return list
-  }, [realPlayer])
+  }, [realPlayer, showMock])
 
   const [selectedName, setSelectedName] = useState(extendedStudents[0]?.name ?? '')
   const [showDetailPanel, setShowDetailPanel] = useState(false)
+  const [showMock, setShowMock] = useState(true)
 
   const student = useMemo(
     () => extendedStudents.find((item) => item.name === selectedName) ?? extendedStudents[0],
@@ -141,6 +143,7 @@ export default function Dashboard() {
         newPlayer.sessions[newPlayer.sessions.length - 1].teacherMemo = memo
         writePlayerData(newPlayer)
         setRealPlayer(newPlayer)
+        saveTeacherMemo(latestSession._dbId ?? '', memo).catch(() => {})
         alert('메모가 저장되었습니다.')
       }
     } else {
@@ -292,7 +295,7 @@ export default function Dashboard() {
 
         {/* 학생 테이블 */}
         <section className="mt-8 border border-[var(--border)] bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-extrabold">학생 목록</h2>
+          <div className="flex items-center justify-between mb-4"><h2 className="text-lg font-extrabold">학생 목록</h2><button type="button" onClick={() => setShowMock(!showMock)} className="text-xs border border-gray-200 px-3 py-1 font-bold text-gray-500 hover:text-gray-700">{showMock ? "견본 숨기기" : "견본 보기"}</button></div>
           <p className="mb-4 text-xs text-[var(--text-light)]">이름을 클릭하면 개별 학습 현황을 확인할 수 있습니다.</p>
           <div className="overflow-auto">
             <table className="min-w-full text-sm">
@@ -345,6 +348,7 @@ export default function Dashboard() {
           <div className="mb-5 flex items-center justify-between">
             <div>
               <h2 className="text-xl font-extrabold text-[var(--text-main)]">{student.name} 학습 현황</h2>
+              <button type="button" onClick={() => setShowDetailPanel(true)} className="text-xs bg-[var(--primary)] text-white px-3 py-1 font-bold shadow-sm hover:opacity-90">상세 분석</button>
               <div className="mt-2 flex flex-wrap gap-2">
                 <span className={`border px-3 py-1 text-xs font-bold ${regulationTone[student.regulationLevel as keyof typeof regulationTone]}`}>
                   {regulationLabel[student.regulationLevel as keyof typeof regulationLabel]}
@@ -459,6 +463,13 @@ export default function Dashboard() {
           </div>
         </section>
       </div>
+      {showDetailPanel && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowDetailPanel(false)}>
+            <div className="max-h-[90vh] w-full max-w-4xl overflow-auto bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <StudentDetailPanel student={student} sessions={student.sessions ?? []} teacherId={user?.id ?? ""} onClose={() => setShowDetailPanel(false)} />
+            </div>
+          </div>
+        )}
     </main>
   )
 }

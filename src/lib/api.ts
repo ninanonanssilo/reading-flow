@@ -19,6 +19,11 @@ export async function loginStudent(classroomId: string, pin: string): Promise<{
   message?: string
 }> {
   if (!isOnlineMode) {
+    const localPlayer = readPlayerData()
+    if (localPlayer.sessions && localPlayer.sessions.length > 0) {
+      const { mockStudents } = await import('../data/mockStudents')
+      return [{ id: 'local', name: localPlayer.name || 'Local Student', sessions: localPlayer.sessions, level: localPlayer.level, totalSessions: localPlayer.totalSessions, totalStars: localPlayer.totalStars, badges: localPlayer.badges, regulationLevel: 'ai-adjusted' }, ...mockStudents]
+    }
     return { success: true, player: readPlayerData() }
   }
 
@@ -65,6 +70,11 @@ interface SaveSessionParams {
 
 export async function saveSession(params: SaveSessionParams): Promise<boolean> {
   if (!isOnlineMode) {
+    const localPlayer = readPlayerData()
+    if (localPlayer.sessions && localPlayer.sessions.length > 0) {
+      const { mockStudents } = await import('../data/mockStudents')
+      return [{ id: 'local', name: localPlayer.name || 'Local Student', sessions: localPlayer.sessions, level: localPlayer.level, totalSessions: localPlayer.totalSessions, totalStars: localPlayer.totalStars, badges: localPlayer.badges, regulationLevel: 'ai-adjusted' }, ...mockStudents]
+    }
     const player = readPlayerData()
     localAppendSession(player, params.session, params.earnedStars, params.newLevel)
     return true
@@ -142,6 +152,11 @@ export async function saveSession(params: SaveSessionParams): Promise<boolean> {
 
 export async function loadClassroomStudents(classroomId: string): Promise<unknown[]> {
   if (!isOnlineMode) {
+    const localPlayer = readPlayerData()
+    if (localPlayer.sessions && localPlayer.sessions.length > 0) {
+      const { mockStudents } = await import('../data/mockStudents')
+      return [{ id: 'local', name: localPlayer.name || 'Local Student', sessions: localPlayer.sessions, level: localPlayer.level, totalSessions: localPlayer.totalSessions, totalStars: localPlayer.totalStars, badges: localPlayer.badges, regulationLevel: 'ai-adjusted' }, ...mockStudents]
+    }
     const { mockStudents } = await import('../data/mockStudents')
     return mockStudents
   }
@@ -256,10 +271,10 @@ function mapDbSessionToLocal(dbSession: Record<string, unknown>): SessionData {
   return {
     passageId: dbSession.passage_id as string,
     goalType: dbSession.goal_type as SessionData['goalType'],
-    confidence: 2,
+    confidence: (dbSession.confidence as number) ?? 2,
     analysis: {
-      original: '',
-      recognized: '',
+      original: (dbSession.transcript as string) ?? '',
+      recognized: (dbSession.transcript as string) ?? '',
       originalWords: [],
       recognizedWords: [],
       errors: {

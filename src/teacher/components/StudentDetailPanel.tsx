@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { saveReclassification } from '../../lib/api'
 import type { SessionData } from '../../types'
 import { applyReclassifications, type Reclassification } from '../../utils/reclassification'
 import { determineHHAIRLevel } from '../../utils/scaffold'
@@ -18,7 +19,7 @@ export default function StudentDetailPanel({ student, sessions, teacherId, onClo
   const [recls, setRecls] = useState<Reclassification[]>([])
   const ss = sessions[si] ?? null
   const adj = useMemo(() => { if (!ss || recls.length === 0) return null; return applyReclassifications(ss.analysis, recls) }, [ss, recls])
-  const addR = (r: Reclassification) => setRecls((p) => [...p.filter((x) => x.wordIndex !== r.wordIndex), r])
+  const addR = (r: Reclassification) => { setRecls((p) => [...p.filter((x) => x.wordIndex !== r.wordIndex), r]); saveReclassification({ sessionId: String(si), wordIndex: r.wordIndex, originalType: r.originalType, reclassifiedType: r.reclassifiedType, teacherId }).catch(() => {}) }
   const st = useMemo(() => {
     if (sessions.length === 0) return null
     const aa = sessions.map((s) => s.analysis.accuracy)

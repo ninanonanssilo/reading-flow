@@ -51,13 +51,13 @@ export default function Register() {
     return <Navigate to={config.home} replace />
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setError(null)
     if (password !== passwordConfirm) {
       setError('비밀번호가 일치하지 않습니다.')
       return
     }
-    const err = register(username, password, role, consent, realName, birthdate)
+    const err = await register(username, password, role, consent, realName, birthdate)
     if (err) {
       setError(err)
       return

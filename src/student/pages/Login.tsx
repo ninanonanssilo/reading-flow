@@ -41,9 +41,9 @@ export default function Login() {
     return <Navigate to={config.home} replace />
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setError(null)
-    const err = login(username, password, role)
+    const err = await login(username, password, role)
     if (err) {
       setError(err)
       return
