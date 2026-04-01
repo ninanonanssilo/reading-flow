@@ -1,3 +1,4 @@
+import { hasValidConsent } from '../../utils/privacy'
 import { useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
@@ -17,6 +18,10 @@ export default function WelcomeScreen() {
 
   if (!player.name) {
     return <Navigate to="/nickname" replace />
+  }
+
+  if (!hasValidConsent()) {
+    return <Navigate to="/consent" replace />
   }
 
   const handleNameSave = () => {

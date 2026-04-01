@@ -1,3 +1,4 @@
+import { hasAudioConsent } from '../../utils/privacy'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useFlow } from '../../context/FlowContext'
@@ -52,7 +53,7 @@ export default function ReadingActivity() {
     const blob = await speech.stop()
     const startedAt = draft.readingStartedAt ?? endedAt
 
-    if (blob) {
+    if (blob && hasAudioConsent()) {
       const audioId = `audio_${Date.now()}`
       await saveAudioBlob(audioId, blob)
       setAudioId(audioId)

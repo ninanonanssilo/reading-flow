@@ -18,6 +18,8 @@ const Completion = lazy(() => import('./student/pages/Completion'))
 const Dashboard = lazy(() => import('./teacher/pages/Dashboard'))
 const PinLogin = lazy(() => import('./student/pages/PinLogin'))
 const SessionHistory = lazy(() => import('./student/pages/SessionHistory'))
+const ConsentFlow = lazy(() => import('./student/pages/ConsentFlow'))
+const PrivacyManagement = lazy(() => import('./teacher/pages/PrivacyManagement'))
 
 function Loading() {
   return (
@@ -56,6 +58,7 @@ export default function App() {
               <Route path="/login/:role" element={<Login />} />
               <Route path="/register/:role" element={<Register />} />
               <Route path="/pin" element={<PinLogin />} />
+              <Route path="/consent" element={<ConsentFlow />} />
 
               {/* 학생 전용 */}
               <Route path="/nickname" element={<StudentRoute><NicknameSetup /></StudentRoute>} />
@@ -70,6 +73,7 @@ export default function App() {
 
               {/* 교사 전용 */}
               <Route path="/teacher" element={<TeacherRoute><Dashboard /></TeacherRoute>} />
+              <Route path="/privacy" element={<TeacherRoute><PrivacyManagement /></TeacherRoute>} />
 
               <Route path="*" element={<Navigate to="/welcome" replace />} />
             </Routes>

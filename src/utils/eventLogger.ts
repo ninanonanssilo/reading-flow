@@ -1,3 +1,4 @@
+import { hasEventLogConsent } from './privacy'
 // ──────────────────────────────────────────
 // 타입 정의
 // ──────────────────────────────────────────
@@ -61,7 +62,8 @@ export function logEvent(
   activity: ActivityType,
   screen: ScreenName,
   metadata?: Record<string, unknown>,
-): EventLog {
+): EventLog | null {
+  if (!hasEventLogConsent()) return null
   const event: EventLog = {
     id: crypto.randomUUID(),
     sessionId: currentSessionId,

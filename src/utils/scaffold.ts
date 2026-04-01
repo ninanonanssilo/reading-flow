@@ -29,13 +29,19 @@ export function determineHHAIRLevel(
   sessions: SessionData[],
   currentAccuracy: number,
 ): RegulationLevel {
+  const getEffectiveAccuracy = (s: SessionData): number => {
+    if ((s as any).adjustedAccuracy != null && typeof (s as any).adjustedAccuracy === 'number') {
+      return (s as any).adjustedAccuracy
+    }
+    return s.analysis.accuracy
+  }
   if (sessions.length < 3) {
     return currentAccuracy >= 80 ? 'co-regulated' : 'ai-adjusted'
   }
 
   const recent3 = sessions.slice(-3)
-  const avgAccuracy = recent3.reduce((sum, s) => sum + s.analysis.accuracy, 0) / 3
-  const trend = recent3[2].analysis.accuracy - recent3[0].analysis.accuracy
+  const avgAccuracy = recent3.reduce((sum, s) => sum + getEffectiveAccuracy(s), 0) / 3
+  const trend = getEffectiveAccuracy(recent3[2]) - getEffectiveAccuracy(recent3[0])
 
   const avgGap = recent3.reduce((sum, s) => {
     const aiRating = Math.max(1, Math.min(5, Math.round(s.analysis.accuracy / 20)))

@@ -1,3 +1,4 @@
+import { hashPassword, verifyPassword } from '../utils/privacy'
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import type { UserAccount, UserRole } from '../types'
 
@@ -51,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     writeSession(user?.id ?? null)
   }, [user])
 
-  const register = useCallback((username: string, password: string, role: UserRole, privacyConsent: boolean, realName: string, birthdate: string): string | null => {
+  const register = useCallback(async (username: string, password: string, role: UserRole, privacyConsent: boolean, realName: string, birthdate: string): string | null => {
     if (!username.trim()) return '아이디를 입력해주세요.'
     if (username.trim().length < 2) return '아이디는 2자 이상이어야 합니다.'
     if (!password) return '비밀번호를 입력해주세요.'
@@ -68,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const newUser: UserAccount = {
       id: crypto.randomUUID(),
       username: username.trim(),
-      password,
+      password: await hashPassword(password),
       realName: realName.trim(),
       birthdate: birthdate.trim(),
       role,
@@ -82,12 +83,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return null
   }, [])
 
-  const login = useCallback((username: string, password: string, role: UserRole): string | null => {
+  const login = useCallback(async (username: string, password: string, role: UserRole): string | null => {
     if (!username.trim()) return '아이디를 입력해주세요.'
     if (!password) return '비밀번호를 입력해주세요.'
 
     const users = readUsers()
-    const found = users.find((u) => u.username === username.trim() && u.password === password && u.role === role)
+    const candidate = users.find((u) => u.username === username.trim() && u.role === role)
+    if (!candidate) return '아이디 또는 비밀번호가 일치하지 않습니다.'
+    const passwordMatch = await verifyPassword(password, candidate.password)
+    const found = passwordMatch ? candidate : null
     if (!found) return '아이디 또는 비밀번호가 일치하지 않습니다.'
 
     setUser(found)

@@ -1,3 +1,4 @@
+import StudentDetailPanel from '../components/StudentDetailPanel'
 import {
   ArcElement,
   BarElement,
@@ -86,6 +87,7 @@ export default function Dashboard() {
   }, [realPlayer])
 
   const [selectedName, setSelectedName] = useState(extendedStudents[0]?.name ?? '')
+  const [showDetailPanel, setShowDetailPanel] = useState(false)
 
   const student = useMemo(
     () => extendedStudents.find((item) => item.name === selectedName) ?? extendedStudents[0],
@@ -264,6 +266,7 @@ export default function Dashboard() {
               >
                 로그아웃
               </button>
+              <Link to="/privacy" className="border border-[var(--border)] bg-white px-4 py-2 text-sm font-bold text-[var(--text-light)] shadow-sm transition hover:text-blue-500">개인정보 관리</Link>
             </div>
           </div>
           <h1 className="text-3xl font-extrabold text-[var(--text-main)]">학급 읽기 유창성 대시보드</h1>
