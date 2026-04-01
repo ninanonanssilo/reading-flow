@@ -122,6 +122,14 @@ npm run dev
 
 ---
 
+## 📐 시스템 아키텍처 문서
+
+전체 시스템 구조, 알고리즘, 데이터 모델, 개인정보 보호 설계 등 상세 기술 문서:
+
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — 이론적 프레임워크, BASA/HHAIR 알고리즘, DB 스키마, 구현 현황, 배포 구성
+
+---
+
 ## 📄 라이선스
 
 MIT License
