@@ -5,8 +5,6 @@ import { useAuth } from '../../context/AuthContext'
 import { useFlow } from '../../context/FlowContext'
 import { badges as badgeDefs, levels } from '../../data/constants'
 import Lumi from '../components/Lumi'
-import LumiDialogue from '../components/LumiDialogue'
-import { welcomeFirstVisit, welcomeReturning } from '../../data/lumiDialogues'
 import SessionMiniChart from '../components/SessionMiniChart'
 
 export default function WelcomeScreen() {
@@ -16,15 +14,6 @@ export default function WelcomeScreen() {
   const currentLevel = levels.find((l) => l.level === player.level) ?? levels[0]
   const nextLevel = levels.find((l) => l.level === player.level + 1)
   const [editingName, setEditingName] = useState(false)
-  const [showDialogue, setShowDialogue] = useState(() => {
-    const key = 'reading-flow-lumi-welcomed'
-    if (!sessionStorage.getItem(key)) {
-      sessionStorage.setItem(key, '1')
-      return true
-    }
-    return false
-  })
-  const dialogueLines = player.totalSessions === 0 ? welcomeFirstVisit : welcomeReturning
   const [nameInput, setNameInput] = useState(player.name)
 
   if (!player.name) {
@@ -43,10 +32,6 @@ export default function WelcomeScreen() {
     }
   }
 
-  const handleDialogueComplete = (choices: Record<string, string>) => {
-    setShowDialogue(false)
-    if (choices['return-1'] === 'history') navigate('/history')
-  }
   const earnedIds = new Set(player.badges.map((b) => b.id))
 
   const sessionsProgress = nextLevel
@@ -59,7 +44,6 @@ export default function WelcomeScreen() {
 
   return (
     <main className="min-h-screen bg-[var(--bg-main)]">
-      {showDialogue && <LumiDialogue lines={dialogueLines} onComplete={handleDialogueComplete} playerName={player.name} />}
       {/* 헤더 */}
       <header className="mx-auto flex max-w-4xl items-center justify-between px-6 pt-5">
         <Link
