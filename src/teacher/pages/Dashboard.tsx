@@ -53,6 +53,8 @@ export default function Dashboard() {
 
   // 실시간 로컬 실제 학생 데이터 로드
   const [realPlayer, setRealPlayer] = useState(() => readPlayerData())
+  const [showMock, setShowMock] = useState(true)
+  const [showDetailPanel, setShowDetailPanel] = useState(false)
 
   const extendedStudents = useMemo(() => {
     let list: any[] = showMock ? [...mockStudents] : []
@@ -88,8 +90,6 @@ export default function Dashboard() {
   }, [realPlayer, showMock])
 
   const [selectedName, setSelectedName] = useState(extendedStudents[0]?.name ?? '')
-  const [showDetailPanel, setShowDetailPanel] = useState(false)
-  const [showMock, setShowMock] = useState(true)
 
   const student = useMemo(
     () => extendedStudents.find((item) => item.name === selectedName) ?? extendedStudents[0],
