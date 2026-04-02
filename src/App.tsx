@@ -20,6 +20,7 @@ const PinLogin = lazy(() => import('./student/pages/PinLogin'))
 const SessionHistory = lazy(() => import('./student/pages/SessionHistory'))
 const ConsentFlow = lazy(() => import('./student/pages/ConsentFlow'))
 const PrivacyManagement = lazy(() => import('./teacher/pages/PrivacyManagement'))
+const ClassroomManagement = lazy(() => import('./teacher/pages/ClassroomManagement'))
 
 function Loading() {
   return (
@@ -73,6 +74,7 @@ export default function App() {
 
               {/* 교사 전용 */}
               <Route path="/teacher" element={<TeacherRoute><Dashboard /></TeacherRoute>} />
+              <Route path="/teacher/classrooms" element={<TeacherRoute><ClassroomManagement /></TeacherRoute>} />
               <Route path="/privacy" element={<TeacherRoute><PrivacyManagement /></TeacherRoute>} />
 
               <Route path="*" element={<Navigate to="/welcome" replace />} />

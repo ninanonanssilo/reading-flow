@@ -18,10 +18,11 @@ export interface Database {
           name: string
           teacher_id: string
           school_year: number
+          class_code: string
           created_at: string
         }
-        Insert: { name: string; teacher_id: string; school_year?: number }
-        Update: { name?: string; teacher_id?: string; school_year?: number }
+        Insert: { name: string; teacher_id: string; school_year?: number; class_code?: string }
+        Update: { name?: string; teacher_id?: string; school_year?: number; class_code?: string }
       }
       students: {
         Row: {

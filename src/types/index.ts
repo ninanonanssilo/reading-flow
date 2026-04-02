@@ -172,6 +172,26 @@ export interface UserAccount {
   privacyConsent: boolean
   privacyConsentAt: number
   createdAt: number
+  _supabaseTeacherId?: string
+}
+
+export interface Classroom {
+  id: string
+  name: string
+  classCode: string
+  teacherId: string
+  schoolYear: number
+  studentCount?: number
+  createdAt: string
+}
+
+export interface ClassroomStudent {
+  id: string
+  name: string
+  pin: string
+  level: number
+  totalSessions: number
+  createdAt: string
 }
 
 export interface AuthState {

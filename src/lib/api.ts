@@ -7,6 +7,9 @@ import type {
   PlayerData,
   SessionData,
   RegulationLevel,
+  Classroom,
+  ClassroomStudent,
+  UserAccount,
 } from '../types'
 
 // ──────────────────────────────────────────
@@ -312,4 +315,224 @@ function determineLatestHHAIR(sessions: unknown[]): RegulationLevel {
       new Date((a as Record<string, unknown>).created_at as string).getTime(),
   )
   return ((sorted[0] as Record<string, unknown>).hhair_level as RegulationLevel) ?? 'ai-adjusted'
+}
+
+// ──────────────────────────────────────────
+// 7. 교사 Supabase 동기화
+// ──────────────────────────────────────────
+
+export async function syncTeacherToSupabase(
+  user: UserAccount,
+): Promise<string | null> {
+  if (!isOnlineMode) return null
+
+  const { data, error } = await supabase!
+    .from('teachers')
+    .upsert(
+      {
+        email: user.username,
+        name: user.realName || user.username,
+        password_hash: user.password,
+      } as never,
+      { onConflict: 'email' },
+    )
+    .select('id')
+    .single()
+
+  if (error || !data) {
+    console.error('[api] 교사 동기화 실패:', error)
+    return null
+  }
+
+  return (data as { id: string }).id
+}
+
+// ──────────────────────────────────────────
+// 8. 학급 관리 CRUD
+// ──────────────────────────────────────────
+
+function generateClassCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  let code = ''
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)]
+  }
+  return code
+}
+
+function generate4DigitPin(): string {
+  return String(Math.floor(Math.random() * 10000)).padStart(4, '0')
+}
+
+export async function createClassroom(
+  teacherId: string,
+  name: string,
+): Promise<Classroom | null> {
+  if (!isOnlineMode) return null
+
+  const classCode = generateClassCode()
+
+  const { data, error } = await supabase!
+    .from('classrooms')
+    .insert({ name, teacher_id: teacherId, class_code: classCode } as never)
+    .select()
+    .single()
+
+  if (error || !data) {
+    console.error('[api] 학급 생성 실패:', error)
+    return null
+  }
+
+  const row = data as Record<string, unknown>
+  return {
+    id: row.id as string,
+    name: row.name as string,
+    classCode: row.class_code as string,
+    teacherId: row.teacher_id as string,
+    schoolYear: row.school_year as number,
+    studentCount: 0,
+    createdAt: row.created_at as string,
+  }
+}
+
+export async function loadTeacherClassrooms(
+  teacherId: string,
+): Promise<Classroom[]> {
+  if (!isOnlineMode) return []
+
+  const { data, error } = await supabase!
+    .from('classrooms')
+    .select('*, students(count)')
+    .eq('teacher_id', teacherId)
+    .order('created_at', { ascending: false })
+
+  if (error || !data) return []
+
+  return (data as unknown as Record<string, unknown>[]).map((row) => ({
+    id: row.id as string,
+    name: row.name as string,
+    classCode: row.class_code as string,
+    teacherId: row.teacher_id as string,
+    schoolYear: row.school_year as number,
+    studentCount: ((row.students as { count: number }[])?.[0]?.count) ?? 0,
+    createdAt: row.created_at as string,
+  }))
+}
+
+export async function addStudentToClassroom(
+  classroomId: string,
+  studentName: string,
+): Promise<ClassroomStudent | null> {
+  if (!isOnlineMode) return null
+
+  // 기존 PIN 조회 후 충돌 없는 PIN 생성
+  const { data: existing } = await supabase!
+    .from('students')
+    .select('pin')
+    .eq('classroom_id', classroomId)
+
+  const usedPins = new Set((existing ?? []).map((s) => (s as { pin: string }).pin))
+  let pin = generate4DigitPin()
+  let attempts = 0
+  while (usedPins.has(pin) && attempts < 50) {
+    pin = generate4DigitPin()
+    attempts++
+  }
+
+  const { data, error } = await supabase!
+    .from('students')
+    .insert({ classroom_id: classroomId, name: studentName, pin } as never)
+    .select()
+    .single()
+
+  if (error || !data) {
+    console.error('[api] 학생 추가 실패:', error)
+    return null
+  }
+
+  const row = data as Record<string, unknown>
+  return {
+    id: row.id as string,
+    name: row.name as string,
+    pin: row.pin as string,
+    level: row.level as number,
+    totalSessions: row.total_sessions as number,
+    createdAt: row.created_at as string,
+  }
+}
+
+export async function loadClassroomStudentsForManagement(
+  classroomId: string,
+): Promise<ClassroomStudent[]> {
+  if (!isOnlineMode) return []
+
+  const { data, error } = await supabase!
+    .from('students')
+    .select('id, name, pin, level, total_sessions, created_at')
+    .eq('classroom_id', classroomId)
+    .order('name')
+
+  if (error || !data) return []
+
+  return (data as unknown as Record<string, unknown>[]).map((row) => ({
+    id: row.id as string,
+    name: row.name as string,
+    pin: row.pin as string,
+    level: row.level as number,
+    totalSessions: row.total_sessions as number,
+    createdAt: row.created_at as string,
+  }))
+}
+
+export async function updateStudent(
+  studentId: string,
+  name: string,
+): Promise<boolean> {
+  if (!isOnlineMode) return false
+
+  const { error } = await supabase!
+    .from('students')
+    .update({ name } as never)
+    .eq('id', studentId)
+
+  return !error
+}
+
+export async function deleteStudent(studentId: string): Promise<boolean> {
+  if (!isOnlineMode) return false
+
+  const { error } = await supabase!
+    .from('students')
+    .delete()
+    .eq('id', studentId)
+
+  return !error
+}
+
+export async function deleteClassroom(classroomId: string): Promise<boolean> {
+  if (!isOnlineMode) return false
+
+  const { error } = await supabase!
+    .from('classrooms')
+    .delete()
+    .eq('id', classroomId)
+
+  return !error
+}
+
+export async function resolveClassCode(
+  code: string,
+): Promise<{ id: string; name: string } | null> {
+  if (!isOnlineMode) return null
+
+  const { data, error } = await supabase!
+    .from('classrooms')
+    .select('id, name')
+    .eq('class_code', code.toUpperCase())
+    .single()
+
+  if (error || !data) return null
+
+  const row = data as { id: string; name: string }
+  return { id: row.id, name: row.name }
 }

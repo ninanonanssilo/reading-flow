@@ -1,6 +1,8 @@
 import { hashPassword, verifyPassword } from '../utils/privacy'
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import type { UserAccount, UserRole } from '../types'
+import { syncTeacherToSupabase } from '../lib/api'
+import { isOnlineMode } from '../lib/supabase'
 
 const USERS_KEY = 'reading-flow-users'
 const SESSION_KEY = 'reading-flow-session'
@@ -80,6 +82,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     writeUsers([...users, newUser])
     setUser(newUser)
+
+    if (role === 'teacher' && isOnlineMode) {
+      syncTeacherToSupabase(newUser).then((supabaseId) => {
+        if (supabaseId) {
+          const updated = { ...newUser, _supabaseTeacherId: supabaseId }
+          setUser(updated)
+          const allUsers = readUsers()
+          writeUsers(allUsers.map((u) => (u.id === updated.id ? updated : u)))
+        }
+      })
+    }
+
     return null
   }, [])
 
@@ -95,6 +109,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!found) return '아이디 또는 비밀번호가 일치하지 않습니다.'
 
     setUser(found)
+
+    if (found.role === 'teacher' && isOnlineMode && !found._supabaseTeacherId) {
+      syncTeacherToSupabase(found).then((supabaseId) => {
+        if (supabaseId) {
+          const updated = { ...found, _supabaseTeacherId: supabaseId }
+          setUser(updated)
+          const allUsers = readUsers()
+          writeUsers(allUsers.map((u) => (u.id === updated.id ? updated : u)))
+        }
+      })
+    }
+
     return null
   }, [])
 

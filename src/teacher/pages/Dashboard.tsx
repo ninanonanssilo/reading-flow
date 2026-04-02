@@ -269,6 +269,7 @@ export default function Dashboard() {
               >
                 로그아웃
               </button>
+              <Link to="/teacher/classrooms" className="border border-[var(--border)] bg-white px-4 py-2 text-sm font-bold text-[var(--text-light)] shadow-sm transition hover:text-blue-500">학급 관리</Link>
               <Link to="/privacy" className="border border-[var(--border)] bg-white px-4 py-2 text-sm font-bold text-[var(--text-light)] shadow-sm transition hover:text-blue-500">개인정보 관리</Link>
             </div>
           </div>
