@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import SiteGuide from './SiteGuide'
 
 export default function RoleSelect() {
   const { user } = useAuth()
+  const [showGuide, setShowGuide] = useState(false)
 
   // 이미 로그인된 경우 역할에 맞게 리다이렉트
   if (user) {
@@ -14,8 +17,43 @@ export default function RoleSelect() {
     return null
   }
 
+  if (showGuide) {
+    return (
+      <main className="min-h-screen bg-[var(--bg-main)]">
+        <header className="mx-auto flex max-w-4xl items-center justify-between px-6 pt-5">
+          <button
+            type="button"
+            onClick={() => setShowGuide(false)}
+            className="flex items-center gap-2 border border-[var(--border)] bg-white px-5 py-2 text-base font-extrabold text-[var(--primary)] shadow-sm transition hover:opacity-80"
+          >
+            <span className="text-lg">🧑‍🚀</span> 리딩플로우
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowGuide(false)}
+            className="border border-[var(--border)] bg-white px-4 py-2 text-sm font-bold text-[var(--text-light)] shadow-sm transition hover:text-[var(--primary)]"
+          >
+            돌아가기
+          </button>
+        </header>
+        <SiteGuide />
+      </main>
+    )
+  }
+
   return (
     <main className="min-h-screen bg-white">
+      {/* 좌측 상단 사이트 안내 */}
+      <div className="absolute left-4 top-4 z-10">
+        <button
+          type="button"
+          onClick={() => setShowGuide(true)}
+          className="flex items-center gap-1.5 border border-[var(--border)] bg-white px-4 py-2 text-sm font-bold text-[var(--text-sub)] shadow-sm transition hover:text-[var(--primary)] hover:shadow-md"
+        >
+          <span>📖</span> 사이트 안내
+        </button>
+      </div>
+
       <div className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center px-6 py-10">
         <div className="mb-10 text-center animate-slide-up">
           <div className="mb-6 flex justify-center">
