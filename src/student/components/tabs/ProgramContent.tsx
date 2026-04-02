@@ -1,0 +1,205 @@
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useFlow } from '../../../context/FlowContext'
+import { badges as badgeDefs, levels } from '../../../data/constants'
+import Lumi from '../Lumi'
+import SessionMiniChart from '../SessionMiniChart'
+
+export default function ProgramContent() {
+  const { player, setName } = useFlow()
+  const currentLevel = levels.find((l) => l.level === player.level) ?? levels[0]
+  const nextLevel = levels.find((l) => l.level === player.level + 1)
+  const [editingName, setEditingName] = useState(false)
+  const [nameInput, setNameInput] = useState(player.name)
+
+  const handleNameSave = () => {
+    const name = nameInput.trim()
+    if (name) {
+      setName(name)
+      setEditingName(false)
+    }
+  }
+
+  const earnedIds = new Set(player.badges.map((b) => b.id))
+
+  const sessionsProgress = nextLevel
+    ? Math.min(100, (player.totalSessions / nextLevel.requiredSessions) * 100)
+    : 100
+  const starsProgress = nextLevel
+    ? Math.min(100, (player.totalStars / nextLevel.requiredStars) * 100)
+    : 100
+  const overallProgress = Math.min(sessionsProgress, starsProgress)
+
+  return (
+    <div className="mx-auto flex max-w-4xl flex-col items-center px-6 py-10">
+      {/* 타이틀 */}
+      <div className="mb-8 text-center">
+        <Lumi mood="idle" size="lg" message="안녕! 오늘도 읽기 탐험을 떠나볼까?" />
+        <h1 className="text-4xl font-extrabold text-[var(--text-main)] md:text-5xl">
+          읽기 우주탐험대
+        </h1>
+        <p className="mt-3 text-lg text-[var(--text-sub)]">
+          루미와 함께 읽기 실력을 키워보아요!
+        </p>
+      </div>
+
+      {/* 플레이어 정보 카드 */}
+      <div className="mb-5 w-full max-w-md border border-[var(--border)] bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 items-center justify-center bg-[var(--primary-light)] text-2xl">
+            {currentLevel.icon}
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-bold text-[var(--primary)]">Lv.{currentLevel.level} {currentLevel.name}</p>
+            {editingName ? (
+              <div className="mt-1 flex items-center gap-2">
+                <input
+                  type="text"
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleNameSave()}
+                  maxLength={12}
+                  className="w-full border-2 border-[var(--primary)] bg-[var(--primary-light)] px-3 py-1.5 text-base font-bold text-[var(--text-main)] outline-none"
+                  autoFocus
+                />
+                <button type="button" onClick={handleNameSave} className="text-sm font-bold text-[var(--primary)]">저장</button>
+                <button type="button" onClick={() => { setEditingName(false); setNameInput(player.name) }} className="text-sm font-bold text-[var(--text-light)]">취소</button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <p className="text-xl font-extrabold text-[var(--text-main)]">{player.name}</p>
+                <button
+                  type="button"
+                  onClick={() => setEditingName(true)}
+                  className="text-xs font-bold text-[var(--text-light)] hover:text-[var(--primary)]"
+                >
+                  [수정]
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          <div className="bg-[var(--bg-main)] p-3 text-center">
+            <div className="text-[10px] font-bold text-[var(--text-light)]">세션</div>
+            <div className="text-xl font-extrabold text-[var(--text-main)]">{player.totalSessions}</div>
+          </div>
+          <div className="bg-[var(--bg-main)] p-3 text-center">
+            <div className="text-[10px] font-bold text-[var(--text-light)]">별</div>
+            <div className="text-xl font-extrabold text-[var(--accent-yellow)]">{player.totalStars} ⭐</div>
+          </div>
+          <div className="bg-[var(--bg-main)] p-3 text-center">
+            <div className="text-[10px] font-bold text-[var(--text-light)]">레벨</div>
+            <div className="text-xl font-extrabold text-[var(--primary)]">{currentLevel.level}</div>
+          </div>
+        </div>
+
+        {nextLevel && (
+          <div className="mt-4">
+            <div className="flex items-center justify-between text-xs font-bold text-[var(--text-sub)]">
+              <span>다음: Lv.{nextLevel.level} {nextLevel.name} {nextLevel.icon}</span>
+              <span>{Math.round(overallProgress)}%</span>
+            </div>
+            <div className="mt-1.5 h-2.5 overflow-hidden bg-[var(--bg-main)]">
+              <div
+                className="h-full bg-[var(--primary)] transition-all duration-500"
+                style={{ width: `${overallProgress}%` }}
+              />
+            </div>
+            <p className="mt-1 text-[11px] text-[var(--text-light)]">
+              세션 {player.totalSessions}/{nextLevel.requiredSessions} · 별 {player.totalStars}/{nextLevel.requiredStars}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* 최근 읽기 추이 미니 차트 */}
+      {player.sessions.length >= 2 && (
+        <div className="mb-5 w-full max-w-md border border-[var(--border)] bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-extrabold text-[var(--text-main)]">최근 CWPM 추이</h2>
+            <Link
+              to="/history"
+              className="text-xs font-bold text-[var(--primary)] hover:underline"
+            >
+              전체 기록 →
+            </Link>
+          </div>
+          <SessionMiniChart sessions={player.sessions} height={80} />
+          <div className="mt-2 flex items-center justify-between text-xs text-[var(--text-light)]">
+            <span>최근 {Math.min(5, player.sessions.length)}세션</span>
+            <span>최신: {player.sessions[player.sessions.length - 1].analysis.cwpm.toFixed(1)} CWPM</span>
+          </div>
+        </div>
+      )}
+
+      {/* 뱃지 컬렉션 */}
+      <div className="mb-5 w-full max-w-md border border-[var(--border)] bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-extrabold text-[var(--text-main)]">🏅 뱃지 컬렉션</h2>
+          <span className="text-xs font-bold text-[var(--text-light)]">{earnedIds.size}/{badgeDefs.length} 획득</span>
+        </div>
+        <div className="max-h-60 overflow-y-auto pr-1 scrollbar-none">
+          <div className="grid grid-cols-4 gap-2">
+            {badgeDefs.map((def) => {
+              const earned = earnedIds.has(def.id)
+              return (
+                <div
+                  key={def.id}
+                  className={`flex flex-col items-center gap-1 border p-3 text-center transition ${
+                    earned
+                      ? 'border-[var(--primary)] bg-[var(--primary-light)]'
+                      : 'border-[var(--border)] bg-[var(--bg-main)] opacity-40 grayscale'
+                  }`}
+                  title={def.description}
+                >
+                  <span className="text-2xl">{def.icon}</span>
+                  <span className={`text-[10px] font-bold leading-tight ${earned ? 'text-[var(--text-main)]' : 'text-[var(--text-light)]'}`}>
+                    {def.name}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* 오늘의 흐름 */}
+      <div className="mb-8 w-full max-w-md border border-[var(--border)] bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-base font-extrabold text-[var(--text-main)]">📋 오늘의 읽기 흐름</h2>
+        <div className="space-y-2">
+          {[
+            { num: '01', text: '지문 선택하기', color: 'border-l-[var(--primary)]' },
+            { num: '02', text: '목표와 자신감 설정', color: 'border-l-[var(--accent-orange)]' },
+            { num: '03', text: '소리 내어 읽기', color: 'border-l-[var(--accent-purple)]' },
+            { num: '04', text: '스스로 평가하기', color: 'border-l-[var(--accent-yellow)]' },
+            { num: '05', text: '결과 분석 & 보상', color: 'border-l-[var(--secondary)]' },
+          ].map((item) => (
+            <div key={item.text} className={`flex items-center gap-3 border-l-4 ${item.color} bg-[var(--bg-main)] px-4 py-3`}>
+              <span className="text-xs font-extrabold text-[var(--text-light)]">{item.num}</span>
+              <span className="text-sm font-bold text-[var(--text-main)]">{item.text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 시작 버튼 */}
+      <div className="flex flex-col items-center gap-3">
+        <Link
+          to="/passage"
+          className="bg-[var(--primary)] px-10 py-4 text-lg font-extrabold text-white shadow-md transition hover:bg-[var(--primary-dark)] hover:shadow-lg"
+        >
+          탐험 시작하기 →
+        </Link>
+        {player.sessions.length > 0 && (
+          <Link
+            to="/history"
+            className="border border-[var(--border)] bg-white px-8 py-3 text-sm font-extrabold text-[var(--text-sub)] shadow-sm transition hover:text-[var(--primary)] hover:shadow-md"
+          >
+            나의 읽기 기록 보기
+          </Link>
+        )}
+      </div>
+    </div>
+  )
+}
