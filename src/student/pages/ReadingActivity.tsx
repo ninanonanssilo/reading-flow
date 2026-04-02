@@ -11,6 +11,8 @@ import type { RegulationLevel } from '../../types'
 import { useScreenLogger } from '../../hooks/useScreenLogger'
 import { useActivityLogger } from '../../hooks/useActivityLogger'
 import Lumi from '../components/Lumi'
+import LumiDialogue from '../components/LumiDialogue'
+import { preReadingDialogue } from '../../data/lumiDialogues'
 import StudentLayout from '../components/StudentLayout'
 
 export default function ReadingActivity() {
@@ -21,6 +23,14 @@ export default function ReadingActivity() {
   const speech = useSpeechRecognition('ko-KR')
   const [elapsed, setElapsed] = useState(0)
   const [finished, setFinished] = useState(false)
+  const [showPreDialogue, setShowPreDialogue] = useState(() => {
+    const key = 'reading-flow-preread-' + draft.passageId
+    if (!sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, '1')
+      return true
+    }
+    return false
+  })
   const passage = useMemo(
     () => passages.find((item) => item.id === draft.passageId) ?? passages[0],
     [draft.passageId],
@@ -36,6 +46,8 @@ export default function ReadingActivity() {
       setElapsed(Math.round((Date.now() - draft.readingStartedAt!) / 1000))
     }, 500)
     return () => window.clearInterval(timer)
+
+
   }, [draft.readingStartedAt, speech.state])
 
   const handleStart = () => {
@@ -93,6 +105,7 @@ export default function ReadingActivity() {
       title="소리 내어 읽어 보세요"
       subtitle="마이크를 켜고 지문을 읽으면 루미가 분석해드려요."
     >
+      {showPreDialogue && <LumiDialogue lines={preReadingDialogue} onComplete={() => setShowPreDialogue(false)} playerName={player.name} />}
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         {/* 지문 */}
         <div className="border border-[var(--border)] bg-white p-6 shadow-sm">

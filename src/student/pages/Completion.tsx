@@ -1,8 +1,11 @@
-import { Link, Navigate, useLocation } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import { useScreenLogger } from '../../hooks/useScreenLogger'
 import { useFlow } from '../../context/FlowContext'
 import { badges as badgeDefs, levels } from '../../data/constants'
 import Lumi from '../components/Lumi'
+import LumiDialogue from '../components/LumiDialogue'
+import { getCompletionDialogue } from '../../data/lumiDialogues'
 import type { Badge } from '../../types'
 
 interface CompletionState {
@@ -36,8 +39,18 @@ export default function Completion() {
       )
     : 100
 
+  const compNavigate = useNavigate()
+  const [showDialogue, setShowDialogue] = useState(true)
+  const completionLines = getCompletionDialogue(stars, !!didLevelUp, newBadges.length)
+  const handleCompDialogue = (choices: Record<string, string>) => {
+    setShowDialogue(false)
+    const last = choices['comp-next']
+    if (last === 'again') compNavigate('/passage')
+    else if (last === 'history') compNavigate('/history')
+  }
   return (
     <main className="min-h-screen bg-[var(--bg-main)]">
+      {showDialogue && <LumiDialogue lines={completionLines} onComplete={handleCompDialogue} playerName={player.name} />}
       <div className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center px-6 py-10">
         {/* 레벨업 연출 */}
         {didLevelUp ? (
