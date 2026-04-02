@@ -89,7 +89,7 @@ describe('reclassifyMapping', () => {
 
     const subIdx = analysis.errors.mapping.findIndex((m) => m.type === 'substitution')
     if (subIdx >= 0) {
-      const reclassified = reclassifyMapping(analysis, subIdx, 'correct')
+      const reclassified = reclassifyMapping(analysis, subIdx, 'selfCorrection')
       expect(reclassified.accuracy).toBeGreaterThan(analysis.accuracy)
       expect(reclassified.errorCounts.substitution).toBeLessThan(analysis.errorCounts.substitution)
     }

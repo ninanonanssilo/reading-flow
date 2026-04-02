@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { hashPassword, verifyPassword, hasValidConsent, hasAudioConsent, hasEventLogConsent, anonymizeStudentName } from './privacy'
 
 describe('hashPassword', () => {

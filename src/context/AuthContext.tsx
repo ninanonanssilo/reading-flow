@@ -10,8 +10,8 @@ const SESSION_KEY = 'reading-flow-session'
 interface AuthContextValue {
   user: UserAccount | null
   isLoggedIn: boolean
-  login: (username: string, password: string, role: UserRole) => string | null
-  register: (username: string, password: string, role: UserRole, privacyConsent: boolean, realName: string, birthdate: string) => string | null
+  login: (username: string, password: string, role: UserRole) => Promise<string | null>
+  register: (username: string, password: string, role: UserRole, privacyConsent: boolean, realName: string, birthdate: string) => Promise<string | null>
   logout: () => void
 }
 
@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     writeSession(user?.id ?? null)
   }, [user])
 
-  const register = useCallback(async (username: string, password: string, role: UserRole, privacyConsent: boolean, realName: string, birthdate: string): string | null => {
+  const register = useCallback(async (username: string, password: string, role: UserRole, privacyConsent: boolean, realName: string, birthdate: string): Promise<string | null> => {
     if (!username.trim()) return '아이디를 입력해주세요.'
     if (username.trim().length < 2) return '아이디는 2자 이상이어야 합니다.'
     if (!password) return '비밀번호를 입력해주세요.'
@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return null
   }, [])
 
-  const login = useCallback(async (username: string, password: string, role: UserRole): string | null => {
+  const login = useCallback(async (username: string, password: string, role: UserRole): Promise<string | null> => {
     if (!username.trim()) return '아이디를 입력해주세요.'
     if (!password) return '비밀번호를 입력해주세요.'
 

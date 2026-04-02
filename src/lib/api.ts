@@ -22,11 +22,6 @@ export async function loginStudent(classroomId: string, pin: string): Promise<{
   message?: string
 }> {
   if (!isOnlineMode) {
-    const localPlayer = readPlayerData()
-    if (localPlayer.sessions && localPlayer.sessions.length > 0) {
-      const { mockStudents } = await import('../data/mockStudents')
-      return [{ id: 'local', name: localPlayer.name || 'Local Student', sessions: localPlayer.sessions, level: localPlayer.level, totalSessions: localPlayer.totalSessions, totalStars: localPlayer.totalStars, badges: localPlayer.badges, regulationLevel: 'ai-adjusted' }, ...mockStudents]
-    }
     return { success: true, player: readPlayerData() }
   }
 
@@ -73,11 +68,6 @@ interface SaveSessionParams {
 
 export async function saveSession(params: SaveSessionParams): Promise<boolean> {
   if (!isOnlineMode) {
-    const localPlayer = readPlayerData()
-    if (localPlayer.sessions && localPlayer.sessions.length > 0) {
-      const { mockStudents } = await import('../data/mockStudents')
-      return [{ id: 'local', name: localPlayer.name || 'Local Student', sessions: localPlayer.sessions, level: localPlayer.level, totalSessions: localPlayer.totalSessions, totalStars: localPlayer.totalStars, badges: localPlayer.badges, regulationLevel: 'ai-adjusted' }, ...mockStudents]
-    }
     const player = readPlayerData()
     localAppendSession(player, params.session, params.earnedStars, params.newLevel)
     return true

@@ -80,7 +80,7 @@ export const preReadingDialogue: DialogueLine[] = [
 // 결과 분석 후 대화 (ResultAnalysis)
 // ─────────────────────���────────────────────
 
-export function getPostReadingDialogue(accuracy: number, totalErrors: number): DialogueLine[] {
+export function getPostReadingDialogue(accuracy: number, _totalErrors: number): DialogueLine[] {
   if (accuracy >= 90) {
     return [
       {

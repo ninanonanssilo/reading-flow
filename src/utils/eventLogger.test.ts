@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { startEventSession, logEvent, getEventBuffer, clearEventBuffer, calculateScreenDurations, calculateSRLDistribution, getSessionId } from './eventLogger'
+import { startEventSession, logEvent, getEventBuffer, clearEventBuffer, calculateScreenDurations, calculateSRLDistribution } from './eventLogger'
 
 beforeEach(() => {
   clearEventBuffer()

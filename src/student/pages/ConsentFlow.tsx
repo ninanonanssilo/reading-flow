@@ -53,7 +53,7 @@ export default function ConsentFlow() {
 
   if (step === 'student') {
     return (
-      <StudentLayout title={STUDENT_NOTICE.title}>
+      <StudentLayout title={STUDENT_NOTICE.title} subtitle="">
         <div className="mx-auto max-w-md space-y-4">
           <div className="flex justify-center">
             <Lumi mood="idle" size="lg" message="반가워! 같이 읽기 탐험을 떠나자!" />
@@ -76,7 +76,7 @@ export default function ConsentFlow() {
   }
 
   return (
-    <StudentLayout title="보호자 동의서">
+    <StudentLayout title="보호자 동의서" subtitle="">
       <div className="mx-auto max-w-2xl">
         <div className="mb-4 border-l-4 border-l-[var(--primary)] bg-[var(--primary-light)] p-4">
           <p className="text-sm font-bold text-[var(--primary-dark)]">
