@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep:*)",
+      "Bash(curl:*)",
+      "Bash(npm run:*)",
+      "Bash(npx vite:*)",
+      "mcp__plugin_everything-claude-code_playwright__browser_navigate",
+      "Bash(node -e ':*)",
+      "WebSearch",
+      "Bash(npx tsc:*)",
+      "Bash(git config:*)",
+      "WebFetch(domain:toctocmath.kr)",
+      "WebFetch(domain:www.toctocmath.kr)",
+      "WebFetch(domain:www.eduinnews.co.kr)",
+      "WebFetch(domain:info-bccoliworld.co.kr)",
+      "Bash(git:*)",
+      "Bash(npx vitest:*)",
+      "WebFetch(domain:reading-flow-3yq.pages.dev)",
+      "Bash(ls:*)"
+    ]
+  }
+}

@@ -73,12 +73,12 @@ describe('StudentHome (WelcomeScreen with tabs)', () => {
     const user = userEvent.setup()
     renderHome()
 
-    expect(screen.getByText('리딩플로우')).toBeInTheDocument()
+    expect(screen.getByText('읽기 우주탐험대')).toBeInTheDocument()
     expect(screen.getByText('로그아웃')).toBeInTheDocument()
 
     await user.click(screen.getByRole('tab', { name: /사이트 안내/ }))
 
-    expect(screen.getByText('리딩플로우')).toBeInTheDocument()
+    expect(screen.getByText('읽기 우주탐험대')).toBeInTheDocument()
     expect(screen.getByText('로그아웃')).toBeInTheDocument()
   })
 })

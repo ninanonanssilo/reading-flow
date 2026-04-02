@@ -4,7 +4,7 @@ export default function SiteGuide() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">
       <div className="mb-8 text-center">
-        <Lumi mood="idle" size="lg" message="리딩플로우에 대해 알려줄게!" />
+        <Lumi mood="idle" size="lg" message="읽기 우주탐험대에 대해 알려줄게!" />
         <h1 className="text-3xl font-extrabold text-[var(--text-main)]">사이트 안내</h1>
       </div>
 
@@ -12,7 +12,7 @@ export default function SiteGuide() {
       <section className="mb-6 border border-[var(--border)] bg-white p-6 shadow-sm">
         <h2 className="mb-3 text-lg font-extrabold text-[var(--text-main)]">읽기 우주탐험대란?</h2>
         <p className="text-sm leading-relaxed text-[var(--text-sub)]">
-          읽기 우주탐험대(리딩플로우)는 초등학생의 읽기 유창성을 키워주는 프로그램이에요.
+          읽기 우주탐험대는 초등학생의 읽기 유창성을 키워주는 프로그램이에요.
           루미와 함께 소리 내어 읽고, AI가 분석해주는 결과를 확인하며 실력을 쑥쑥 키울 수 있어요.
           매일 꾸준히 읽으면 별과 뱃지를 모을 수 있고, 레벨도 올라갑니다!
         </p>

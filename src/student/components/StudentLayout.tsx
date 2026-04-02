@@ -43,7 +43,7 @@ export default function StudentLayout({
               className="flex items-center gap-2 border border-[var(--border)] bg-white px-5 py-2 text-base font-extrabold text-[var(--primary)] shadow-sm transition hover:shadow-md"
             >
               <span className="text-lg">🧑‍🚀</span>
-              리딩플로우
+              읽기 우주탐험대
             </Link>
           </div>
 

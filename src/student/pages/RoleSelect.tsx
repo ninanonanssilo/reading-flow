@@ -26,7 +26,7 @@ export default function RoleSelect() {
             onClick={() => setShowGuide(false)}
             className="flex items-center gap-2 border border-[var(--border)] bg-white px-5 py-2 text-base font-extrabold text-[var(--primary)] shadow-sm transition hover:opacity-80"
           >
-            <span className="text-lg">🧑‍🚀</span> 리딩플로우
+            <span className="text-lg">🧑‍🚀</span> 읽기 우주탐험대
           </button>
           <button
             type="button"

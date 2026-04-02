@@ -257,7 +257,7 @@ export default function Dashboard() {
           <div className="mb-5 flex items-center justify-between">
             <Link to="/welcome" className="flex items-center gap-2 transition hover:opacity-80">
               <span className="text-lg">🧑‍🚀</span>
-              <span className="text-base font-extrabold text-[var(--secondary)]">리딩플로우</span>
+              <span className="text-base font-extrabold text-[var(--secondary)]">읽기 우주탐험대</span>
               <span className="border border-[var(--border)] bg-[var(--secondary)] px-3 py-1 text-xs font-bold text-white">교사</span>
             </Link>
             <div className="flex items-center gap-2">

@@ -50,7 +50,7 @@ export default function WelcomeScreen() {
           to="/"
           className="flex items-center gap-2 border border-[var(--border)] bg-white px-5 py-2 text-base font-extrabold text-[var(--primary)] shadow-sm"
         >
-          <span className="text-lg">🧑‍🚀</span> 리딩플로우
+          <span className="text-lg">🧑‍🚀</span> 읽기 우주탐험대
         </Link>
         <div className="flex items-center gap-2">
           {user && <span className="text-sm font-bold text-[var(--text-sub)]">{user.username}</span>}
